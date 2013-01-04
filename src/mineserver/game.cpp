@@ -56,6 +56,7 @@
 #include <mineserver/network/message/playerlistitem.h>
 #include <mineserver/network/message/serverlistping.h>
 #include <mineserver/network/message/kick.h>
+#include <mineserver/network/message/encryptionrequest.h>
 #include <mineserver/game.h>
 #include <mineserver/game/object/slot.h>
 
@@ -159,11 +160,9 @@ void Mineserver::Game::messageWatcherKeepAlive(Mineserver::Game::pointer_t game,
 void Mineserver::Game::messageWatcherHandshake(Mineserver::Game::pointer_t game, Mineserver::Network_Client::pointer_t client, Mineserver::Network_Message::pointer_t message)
 {
   std::cout << "Handshake watcher called!" << std::endl;
-
-  boost::shared_ptr<Mineserver::Network_Message_Handshake> response = boost::make_shared<Mineserver::Network_Message_Handshake>();
-  response->mid = 0x02;
-  response->username = "-";
-  client->outgoing().push_back(response);
+  
+  const Mineserver::Network_Message_Handshake* msg = reinterpret_cast<Mineserver::Network_Message_Handshake*>(&(*message));
+  std::cout << msg->username << " is attempting to connect to: " << msg->hostname <<":"<< msg->port << " with protocol version: "<< (int)msg->protocolVersion << std::endl;
 }
 
 void Mineserver::Game::messageWatcherChat(Mineserver::Game::pointer_t game, Mineserver::Network_Client::pointer_t client, Mineserver::Network_Message::pointer_t message)
@@ -495,10 +494,11 @@ void Mineserver::Game::messageWatcherBlockChange(Mineserver::Game::pointer_t gam
 void Mineserver::Game::messageWatcherServerListPing(Mineserver::Game::pointer_t game, Mineserver::Network_Client::pointer_t client, Mineserver::Network_Message::pointer_t message)
 {
   std::cout << "ServerListPing watcher called!" << std::endl;
-
+  
+  uint8_t nullChar = 0x00;
   std::stringstream reason;
-  reason << "Mineserver 2.0§" << game->countPlayers() << "§" << 32; // TODO: Get max players
-
+  reason << "§1" << nullChar << "51" << nullChar << "1.4.6" << nullChar << "Mineserver 2.0" << nullChar << game->countPlayers() << nullChar << 539;
+  
   boost::shared_ptr<Mineserver::Network_Message_Kick> response = boost::make_shared<Mineserver::Network_Message_Kick>();
   response->mid = 0xFF;
   response->reason = reason.str(); 

@@ -26,25 +26,25 @@
 */
 
 #include <mineserver/byteorder.h>
-#include <mineserver/network/message/serverlistping.h>
+#include <mineserver/network/message/kick.h>
 #include <mineserver/network/protocol/notch/packet.h>
-#include <mineserver/network/protocol/notch/packet/0xFE.h>
+#include <mineserver/network/protocol/notch/packet/0xFD.h>
 
-int Mineserver::Network_Protocol_Notch_Packet_0xFE::_read(Mineserver::Network_Protocol_Notch_PacketStream& ps, Mineserver::Network_Message** message)
+int Mineserver::Network_Protocol_Notch_Packet_0xFD::_read(Mineserver::Network_Protocol_Notch_PacketStream& ps, Mineserver::Network_Message** message)
 {
-  Mineserver::Network_Message_ServerListPing* msg = new Mineserver::Network_Message_ServerListPing;
+  Mineserver::Network_Message_Kick* msg = new Mineserver::Network_Message_Kick;
   *message = msg;
 
-  ps >> msg->mid >> msg->magic;
+  ps >> msg->mid >> msg->reason;
 
   return STATE_GOOD;
 }
 
-int Mineserver::Network_Protocol_Notch_Packet_0xFE::_write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message)
+int Mineserver::Network_Protocol_Notch_Packet_0xFD::_write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message)
 {
-  const Mineserver::Network_Message_ServerListPing* msg = static_cast<const Mineserver::Network_Message_ServerListPing*>(&message);
+  const Mineserver::Network_Message_Kick* msg = static_cast<const Mineserver::Network_Message_Kick*>(&message);
 
-  ps << msg->mid << msg->magic;
+  ps << msg->mid << msg->reason;
 
   return STATE_GOOD;
 }

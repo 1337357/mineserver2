@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2011, The Mineserver Project
+  Copyright (c) 2013, The Mineserver Project
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -25,26 +25,22 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef MINESERVER_NETWORK_PACKET_ENCRYPTIONREQUEST_H
+#define MINESERVER_NETWORK_PACKET_ENCRYPTIONREQUEST_H
+
 #include <mineserver/byteorder.h>
-#include <mineserver/network/message/serverlistping.h>
-#include <mineserver/network/protocol/notch/packet.h>
-#include <mineserver/network/protocol/notch/packet/0xFE.h>
+#include <mineserver/network/message.h>
 
-int Mineserver::Network_Protocol_Notch_Packet_0xFE::_read(Mineserver::Network_Protocol_Notch_PacketStream& ps, Mineserver::Network_Message** message)
+namespace Mineserver
 {
-  Mineserver::Network_Message_ServerListPing* msg = new Mineserver::Network_Message_ServerListPing;
-  *message = msg;
-
-  ps >> msg->mid >> msg->magic;
-
-  return STATE_GOOD;
+  struct Network_Message_EncryptionRequest : public Mineserver::Network_Message
+  {
+    std::string serverId;
+    int16_t keyLength;
+    std::string publicKey;
+    int16_t encryptionBytesLength;
+    std::string encryptionBytes;
+  };
 }
 
-int Mineserver::Network_Protocol_Notch_Packet_0xFE::_write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message)
-{
-  const Mineserver::Network_Message_ServerListPing* msg = static_cast<const Mineserver::Network_Message_ServerListPing*>(&message);
-
-  ps << msg->mid << msg->magic;
-
-  return STATE_GOOD;
-}
+#endif

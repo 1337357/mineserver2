@@ -35,16 +35,12 @@ int Mineserver::Network_Protocol_Notch_Packet_0x02::_read(Mineserver::Network_Pr
   Mineserver::Network_Message_Handshake* msg = new Mineserver::Network_Message_Handshake;
   *message = msg;
 
-  ps >> msg->mid >> msg->username;
+  ps >> msg->mid >> msg->protocolVersion >> msg->username >> msg->hostname >> msg->port;
 
   return STATE_GOOD;
 }
 
 int Mineserver::Network_Protocol_Notch_Packet_0x02::_write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message)
 {
-  const Mineserver::Network_Message_Handshake* msg = static_cast<const Mineserver::Network_Message_Handshake*>(&message);
-
-  ps << msg->mid << msg->username;
-
   return STATE_GOOD;
 }

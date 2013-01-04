@@ -51,7 +51,7 @@ int main()
 
   game->setWorld(0, boost::make_shared<Mineserver::World>());
   game->getWorld(0)->addGenerator(boost::make_shared<Mineserver::World_Generator_Flatlands>());
-
+  
   game->addMessageWatcher(0x00, boost::bind(&Mineserver::Game::messageWatcherKeepAlive, game, _1, _2, _3));
   game->addMessageWatcher(0x01, boost::bind(&Mineserver::Game::messageWatcherLogin, game, _1, _2, _3));
   game->addMessageWatcher(0x02, boost::bind(&Mineserver::Game::messageWatcherHandshake, game, _1, _2, _3));
@@ -66,7 +66,7 @@ int main()
   game->addMovementPostWatcher(boost::bind(&Mineserver::Game::movementPostWatcher, game, _1, _2, _3));
   game->addBlockBreakPostWatcher(boost::bind(&Mineserver::Game::blockBreakPostWatcher, game, _1, _2, _3, _4, _5, _6));
   game->addBlockPlacePostWatcher(boost::bind(&Mineserver::Game::blockPlacePostWatcher, game, _1, _2, _3, _4, _5, _6, _7, _8));
-
+  
   Mineserver::Network_Protocol::pointer_t protocol = boost::make_shared<Mineserver::Network_Protocol_Notch_Protocol>();
   Mineserver::Network_Server::pointer_t server = boost::make_shared<Mineserver::Network_Server>(game, protocol, &service);
 

@@ -35,6 +35,8 @@ namespace Mineserver
 {
   struct Network_Message_ServerListPing : public Mineserver::Network_Message
   {
+    //client always sends 1
+    uint8_t magic;
   };
 }
 

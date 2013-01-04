@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2011, The Mineserver Project
+  Copyright (c) 2013, The Mineserver Project
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -25,26 +25,24 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <mineserver/byteorder.h>
-#include <mineserver/network/message/serverlistping.h>
+#ifndef MINESERVER_NETWORK_PROTOCOL_NOTCH_PACKET_0xFD_H
+#define MINESERVER_NETWORK_PROTOCOL_NOTCH_PACKET_0xFD_H
+
+#include <mineserver/network/message.h>
 #include <mineserver/network/protocol/notch/packet.h>
-#include <mineserver/network/protocol/notch/packet/0xFE.h>
+#include <mineserver/network/protocol/notch/packetstream.h>
 
-int Mineserver::Network_Protocol_Notch_Packet_0xFE::_read(Mineserver::Network_Protocol_Notch_PacketStream& ps, Mineserver::Network_Message** message)
+namespace Mineserver
 {
-  Mineserver::Network_Message_ServerListPing* msg = new Mineserver::Network_Message_ServerListPing;
-  *message = msg;
-
-  ps >> msg->mid >> msg->magic;
-
-  return STATE_GOOD;
+  /**
+   * Encryption request packet, sent from the server to the client.
+   */
+  struct Network_Protocol_Notch_Packet_0xFD : public Mineserver::Network_Protocol_Notch_Packet
+  {
+    int _read(Mineserver::Network_Protocol_Notch_PacketStream& ps, Mineserver::Network_Message** message);
+    int _write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message);
+  };
 }
 
-int Mineserver::Network_Protocol_Notch_Packet_0xFE::_write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message)
-{
-  const Mineserver::Network_Message_ServerListPing* msg = static_cast<const Mineserver::Network_Message_ServerListPing*>(&message);
+#endif
 
-  ps << msg->mid << msg->magic;
-
-  return STATE_GOOD;
-}

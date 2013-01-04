@@ -1,15 +1,15 @@
 /*
-  Copyright (c) 2011, The Mineserver Project
+  Copyright (c) 2011-2013, The Mineserver Project
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  * Redistributions of source code must retain the above copyright
+ * Redistributions of source code must retain the above copyright
     notice, this list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above copyright
+ * Redistributions in binary form must reproduce the above copyright
     notice, this list of conditions and the following disclaimer in the
     documentation and/or other materials provided with the distribution.
-  * Neither the name of the The Mineserver Project nor the
+ * Neither the name of the The Mineserver Project nor the
     names of its contributors may be used to endorse or promote products
     derived from this software without specific prior written permission.
 
@@ -23,28 +23,41 @@
   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
-#include <mineserver/byteorder.h>
-#include <mineserver/network/message/serverlistping.h>
-#include <mineserver/network/protocol/notch/packet.h>
-#include <mineserver/network/protocol/notch/packet/0xFE.h>
+#ifndef AUTHENTICATOR_H
+#define	AUTHENTICATOR_H
 
-int Mineserver::Network_Protocol_Notch_Packet_0xFE::_read(Mineserver::Network_Protocol_Notch_PacketStream& ps, Mineserver::Network_Message** message)
-{
-  Mineserver::Network_Message_ServerListPing* msg = new Mineserver::Network_Message_ServerListPing;
-  *message = msg;
+#include <openssl/rsa.h>
+#include <openssl/x509v3.h>
+#include <openssl/rc4.h>
 
-  ps >> msg->mid >> msg->magic;
+namespace Mineserver {
 
-  return STATE_GOOD;
+  /**
+   * Generates keys and server ID information.
+   */
+  class Authenticator {
+  public:
+    Authenticator();
+    virtual ~Authenticator();
+    
+  private:
+    X509* certificate;
+    EVP_PKEY* pk;
+    RSA* rsaKeyPair;
+    std::string encryptionBytes;
+    std::string serverID;
+    std::string publicKey;
+    
+    /**
+     * Generates the server id which is sent to the client
+     * for minecraft.net session validation.
+     * @return 
+     */
+    void generateId();
+
+  };
 }
+#endif	/* AUTHENTICATOR_H */
 
-int Mineserver::Network_Protocol_Notch_Packet_0xFE::_write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message)
-{
-  const Mineserver::Network_Message_ServerListPing* msg = static_cast<const Mineserver::Network_Message_ServerListPing*>(&message);
-
-  ps << msg->mid << msg->magic;
-
-  return STATE_GOOD;
-}

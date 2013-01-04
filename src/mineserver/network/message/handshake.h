@@ -35,9 +35,15 @@
 
 namespace Mineserver
 {
+  /**
+   * Handshake packet (0x02)
+   */
   struct Network_Message_Handshake : public Mineserver::Network_Message
   {
+    int8_t protocolVersion;
     std::string username;
+    std::string hostname;
+    int32_t port;
   };
 }
 
