@@ -25,53 +25,51 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <iostream>
-#include "authenticator.h"
+#include <sstream>
+
+#include <cryptopp/osrng.h>
+#include <cryptopp/files.h>
+#include <cryptopp/queue.h>
+
+#include <mineserver/network/authenticator.h>
 
 Mineserver::Authenticator::Authenticator() {
 
-  std::cout << "About to generate 1024bit RSA key pair." << std::endl;
-  if ((rsaKeyPair = RSA_generate_key(1024, 17, 0, 0)) == NULL) {
-    std::cerr << "Key pair generation failed" << std::endl;
-    exit(1);
-  }
+  std::cout << "Generating 1024bit RSA key pair." << std::endl;
 
-  /*Format the public key*/
-  certificate = X509_new();
-  pk = EVP_PKEY_new();
-  EVP_PKEY_assign_RSA(pk, rsaKeyPair);
-  X509_set_version(certificate, 0);
-  X509_set_pubkey(certificate, pk);
+  CryptoPP::AutoSeededRandomPool rnd;
+  std::stringstream output;
 
-  int len;
-  unsigned char *buf;
-  buf = NULL;
-  len = i2d_X509(certificate, &buf);
+  CryptoPP::ByteQueue bt;
 
-  //Glue + jesus tape, dont ask - Fador
-  publicKey = std::string((char *) (buf + 28), len - 36);
-  OPENSSL_free(buf);
+  privateKey.Initialize(rnd,1024,65537);
+
+  CryptoPP::RSA::PublicKey RSA_PublicKey(privateKey);
+  RSA_PublicKey.Save(bt);
+
+  CryptoPP::StringSink name(publicKey);
+  bt.CopyTo(name);
+  name.MessageEnd();
 }
 
-Mineserver::Authenticator::~Authenticator() {
-  
+Mineserver::Authenticator::~Authenticator()
+{
+
 }
 
-void Mineserver::Authenticator::generateId() {
-  const std::string temp_nums = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890=-";
-  const std::string temp_hex = "0123456789abcdef";
-
-  for (int i = 0; i < 4; i++) {
-    encryptionBytes += (char) (temp_nums[rand() % temp_nums.size()]);
-  }
-  
-  //TODO - minecraft.net authentication.
-  /* for 'online' mode servers.
-  for (int i = 0; i < 16; i++) {
-    serverID += (char) (temp_hex[rand() % temp_hex.size()]);
-  }
-   */
-  if (true) {
-    serverID = "-";
-  }
+std::string Mineserver::Authenticator::getPublicKey()
+{
+  return publicKey;
 }
+
+int16_t Mineserver::Authenticator::getPublicKeyLength()
+{
+  return int16_t(publicKey.length());
+}
+
+void Mineserver::Authenticator::generateId()
+{
+  //Need complete do for online mod
+}
+
 

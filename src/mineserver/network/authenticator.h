@@ -25,37 +25,46 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <string>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <cryptopp/rsa.h>
+
 #ifndef AUTHENTICATOR_H
 #define	AUTHENTICATOR_H
 
-#include <openssl/rsa.h>
-#include <openssl/x509v3.h>
-#include <openssl/rc4.h>
+
 
 namespace Mineserver {
-
-  /**
+   /**
    * Generates keys and server ID information.
    */
-  class Authenticator {
-  public:
-    Authenticator();
-    virtual ~Authenticator();
-    
-  private:
-    X509* certificate;
-    EVP_PKEY* pk;
-    RSA* rsaKeyPair;
-    std::string encryptionBytes;
-    std::string serverID;
+  class Authenticator : public boost::enable_shared_from_this<Mineserver::Authenticator>
+  {
+
     std::string publicKey;
-    
+    CryptoPP::RSA::PrivateKey privateKey;
+
     /**
      * Generates the server id which is sent to the client
      * for minecraft.net session validation.
-     * @return 
+     * @return
      */
     void generateId();
+
+  public:
+    typedef boost::shared_ptr<Mineserver::Authenticator> pointer_t;
+
+    Authenticator();
+    virtual ~Authenticator();
+
+    std::string getPublicKey();
+    int16_t getPublicKeyLength();
+
+    int decryptMessage(std::string* message);
+    int encryptMessage(std::string* message);
+
 
   };
 }

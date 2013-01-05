@@ -33,6 +33,9 @@
 
 namespace Mineserver
 {
+   /**
+   * Encryption Request (0xFD)
+   */
   struct Network_Message_EncryptionRequest : public Mineserver::Network_Message
   {
     std::string serverId;

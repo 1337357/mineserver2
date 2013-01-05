@@ -70,6 +70,7 @@ SET(mineserver_source
   src/mineserver/localization.cpp
   src/mineserver/network/server.cpp
   src/mineserver/network/client.cpp
+  src/mineserver/network/authenticator.cpp
   src/mineserver/world/generator/flatlands.cpp
   # These need to be put into a separate .so file or something...
   src/mineserver/network/protocol/notch/protocol.cpp
@@ -165,4 +166,5 @@ TARGET_LINK_LIBRARIES(mineserver
   ${ICONV_LIBRARIES}
   ${NOISE_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
+  cryptopp
 )
