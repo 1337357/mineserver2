@@ -25,26 +25,38 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <iostream>
+
 #include <mineserver/byteorder.h>
-#include <mineserver/network/message/kick.h>
+#include <mineserver/network/message/encryptionrequest.h>
 #include <mineserver/network/protocol/notch/packet.h>
 #include <mineserver/network/protocol/notch/packet/0xFD.h>
 
 int Mineserver::Network_Protocol_Notch_Packet_0xFD::_read(Mineserver::Network_Protocol_Notch_PacketStream& ps, Mineserver::Network_Message** message)
 {
-  Mineserver::Network_Message_Kick* msg = new Mineserver::Network_Message_Kick;
-  *message = msg;
+  Mineserver::Network_Message_EncryptionRequest* msg = new Mineserver::Network_Message_EncryptionRequest;
 
-  ps >> msg->mid >> msg->reason;
-
+  ps >> msg->mid >> msg->serverId >> msg->keyLength >> msg->publicKey >> msg->encryptionBytesLength >> msg->encryptionBytes;
   return STATE_GOOD;
 }
 
 int Mineserver::Network_Protocol_Notch_Packet_0xFD::_write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message)
 {
-  const Mineserver::Network_Message_Kick* msg = static_cast<const Mineserver::Network_Message_Kick*>(&message);
-
-  ps << msg->mid << msg->reason;
+  const Mineserver::Network_Message_EncryptionRequest* msg = static_cast<const Mineserver::Network_Message_EncryptionRequest*>(&message);
+  std::cout << "Composing 0xFD packet: " <<
+          "\nServer ID   : " << msg->serverId <<
+          "\nPub key len : " << msg->keyLength <<
+          //"\nPublic key  : " << msg->publicKey <<
+          "\nEncBytes len: " << msg->encryptionBytesLength <<
+          "\nEncBytes    : " << msg->encryptionBytes
+          << std::endl;
+  printf("Public Key:\n");
+  for(int i = 0; i < msg->keyLength; ++i){
+    printf("%02x", msg->publicKey[i]);
+  }
+  printf("\n---End of public key---\n");
+  
+  ps << msg->mid << msg->serverId << msg->keyLength << msg->publicKey << msg->encryptionBytesLength << msg->encryptionBytes;
 
   return STATE_GOOD;
 }

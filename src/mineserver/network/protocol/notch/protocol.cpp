@@ -99,6 +99,8 @@
 
 #include <mineserver/network/protocol/notch/protocol.h>
 
+#include "packet/0xFD.h"
+
 int Mineserver::Network_Protocol_Notch_Protocol::parse(std::vector<uint8_t>& bytes, Mineserver::Network_Message** outmsg)
 {
   if (bytes.size() < 1) {
@@ -891,6 +893,11 @@ int Mineserver::Network_Protocol_Notch_Protocol::compose(std::vector<uint8_t>& b
       int packetState = packet.write(m_packetStream, message);
       break;
     }
+    case 0xFD:
+    {
+      Mineserver::Network_Protocol_Notch_Packet_0xFD packet;
+      int packetState = packet.write(m_packetStream, message);
+    }
     case 0xFE:
     {
       Mineserver::Network_Protocol_Notch_Packet_0xFE packet;
@@ -905,11 +912,12 @@ int Mineserver::Network_Protocol_Notch_Protocol::compose(std::vector<uint8_t>& b
     }
   }
 
-//	printf("Bytes: ");
-//	for (int i = m_packetStream.getPos(); i < m_packetStream.getBuffer()->size(); ++i) {
-//		printf("%02x", m_packetStream.getBuffer()->at(i));
-//	}
-//	printf("\n");
+	printf("Bytes: "); //debug outgoing bytes
+	for (unsigned int i = m_packetStream.getPos(); i < m_packetStream.getBuffer()->size(); ++i) {
+		printf("%02x", m_packetStream.getBuffer()->at(i));
+    printf(" ");
+	}
+	printf("\n");
 
   m_packetStream.setBuffer(NULL);
   m_packetStream.setPos(0);

@@ -136,7 +136,7 @@ SET(mineserver_source
   src/mineserver/network/protocol/notch/packet/0x83.cpp
   src/mineserver/network/protocol/notch/packet/0xC8.cpp
   src/mineserver/network/protocol/notch/packet/0xC9.cpp
-  #src/mineserver/network/protocol/notch/packet/0xFD.cpp
+  src/mineserver/network/protocol/notch/packet/0xFD.cpp
   src/mineserver/network/protocol/notch/packet/0xFE.cpp
   src/mineserver/network/protocol/notch/packet/0xFF.cpp
 )
