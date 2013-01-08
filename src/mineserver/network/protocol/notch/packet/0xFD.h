@@ -35,7 +35,8 @@
 namespace Mineserver
 {
   /**
-   * Encryption request packet, sent from the server to the client.
+   * Encryption request packet sends the server ID and public key + random bytes
+   * to set up secure communication.
    */
   struct Network_Protocol_Notch_Packet_0xFD : public Mineserver::Network_Protocol_Notch_Packet
   {
@@ -45,4 +46,3 @@ namespace Mineserver
 }
 
 #endif
-

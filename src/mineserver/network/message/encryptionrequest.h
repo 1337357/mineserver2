@@ -28,21 +28,20 @@
 #ifndef MINESERVER_NETWORK_PACKET_ENCRYPTIONREQUEST_H
 #define MINESERVER_NETWORK_PACKET_ENCRYPTIONREQUEST_H
 
+#include <string>
+
 #include <mineserver/byteorder.h>
 #include <mineserver/network/message.h>
 
 namespace Mineserver
 {
-   /**
-   * Encryption Request (0xFD)
-   */
   struct Network_Message_EncryptionRequest : public Mineserver::Network_Message
   {
     std::string serverId;
-    int16_t keyLength;
-    std::string publicKey;
-    int16_t encryptionBytesLength;
-    std::string encryptionBytes;
+    uint16_t publicKeyLength;
+    uint8_t* publicKey;
+    uint16_t verifyTokenLength;
+    uint8_t* verifyToken;
   };
 }
 

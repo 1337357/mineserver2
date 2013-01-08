@@ -167,10 +167,10 @@ void Mineserver::Game::messageWatcherHandshake(Mineserver::Game::pointer_t game,
   boost::shared_ptr<Mineserver::Network_Message_EncryptionRequest> response = boost::make_shared<Mineserver::Network_Message_EncryptionRequest>();
   response->mid = 0xFD;
   response->serverId = "-";//need to generate server id for online mode
-  response->keyLength = authentication->getPublicKeyLength();
-  response->publicKey = authentication->getPublicKey();
-  response->encryptionBytesLength = 4;
-  response->encryptionBytes = "f32H";//this needs to be random
+  response->publicKeyLength = NULL; //fixme - add size of byte array
+  //response->publicKey = NULL; //fixme - add the PK array ; //authentication->getPublicKey();
+  response->verifyTokenLength = 4;
+  //response->verifyToken = NULL; //fixme - byte array here too.
 
   client->outgoing().push_back(response);
 

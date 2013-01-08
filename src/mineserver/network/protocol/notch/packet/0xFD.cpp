@@ -1,15 +1,15 @@
 /*
-  Copyright (c) 2011, The Mineserver Project
+  Copyright (c) 2013, The Mineserver Project
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  * Redistributions of source code must retain the above copyright
+ * Redistributions of source code must retain the above copyright
     notice, this list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above copyright
+ * Redistributions in binary form must reproduce the above copyright
     notice, this list of conditions and the following disclaimer in the
     documentation and/or other materials provided with the distribution.
-  * Neither the name of the The Mineserver Project nor the
+ * Neither the name of the The Mineserver Project nor the
     names of its contributors may be used to endorse or promote products
     derived from this software without specific prior written permission.
 
@@ -23,9 +23,7 @@
   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-#include <iostream>
+ */
 
 #include <mineserver/byteorder.h>
 #include <mineserver/network/message/encryptionrequest.h>
@@ -34,29 +32,23 @@
 
 int Mineserver::Network_Protocol_Notch_Packet_0xFD::_read(Mineserver::Network_Protocol_Notch_PacketStream& ps, Mineserver::Network_Message** message)
 {
-  Mineserver::Network_Message_EncryptionRequest* msg = new Mineserver::Network_Message_EncryptionRequest;
-
-  ps >> msg->mid >> msg->serverId >> msg->keyLength >> msg->publicKey >> msg->encryptionBytesLength >> msg->encryptionBytes;
+  //do nothing. we don't read this packet.
   return STATE_GOOD;
 }
 
 int Mineserver::Network_Protocol_Notch_Packet_0xFD::_write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message)
 {
   const Mineserver::Network_Message_EncryptionRequest* msg = static_cast<const Mineserver::Network_Message_EncryptionRequest*>(&message);
-  std::cout << "Composing 0xFD packet: " <<
-          "\nServer ID   : " << msg->serverId <<
-          "\nPub key len : " << msg->keyLength <<
-          //"\nPublic key  : " << msg->publicKey <<
-          "\nEncBytes len: " << msg->encryptionBytesLength <<
-          "\nEncBytes    : " << msg->encryptionBytes
-          << std::endl;
-  printf("Public Key:\n");
-  for(int i = 0; i < msg->keyLength; ++i){
-    printf("%02x", msg->publicKey[i]);
+  ps << msg->mid << msg->serverId << msg->publicKeyLength;
+  //send each byte of the public key array to the stream.
+  for(unsigned int i = 0; i < msg->publicKeyLength; i++){
+    ps << msg->publicKey[i];
   }
-  printf("\n---End of public key---\n");
-  
-  ps << msg->mid << msg->serverId << msg->keyLength << msg->publicKey << msg->encryptionBytesLength << msg->encryptionBytes;
-
+  //send the length of the 'encryption bytes'
+  ps << msg->verifyTokenLength;
+  //now send each byte of the encryption bytes array one at a time
+  for(unsigned int i = 0; i < msg->verifyTokenLength; i++){
+    ps << msg->verifyToken[i];
+  }
   return STATE_GOOD;
 }
