@@ -64,6 +64,7 @@ int main()
   game->addMessageWatcher(0x0E, boost::bind(&Mineserver::Game::messageWatcherDigging, game, _1, _2, _3));
   game->addMessageWatcher(0x0F, boost::bind(&Mineserver::Game::messageWatcherBlockPlacement, game, _1, _2, _3));
   game->addMessageWatcher(0x35, boost::bind(&Mineserver::Game::messageWatcherBlockChange, game, _1, _2, _3));
+  game->addMessageWatcher(0xFC, boost::bind(&Mineserver::Game::messageWatcherEncryptionResponse, game, _1, _2, _3));
   game->addMessageWatcher(0xFE, boost::bind(&Mineserver::Game::messageWatcherServerListPing, game, _1, _2, _3));
   game->addMovementPostWatcher(boost::bind(&Mineserver::Game::movementPostWatcher, game, _1, _2, _3));
   game->addBlockBreakPostWatcher(boost::bind(&Mineserver::Game::blockBreakPostWatcher, game, _1, _2, _3, _4, _5, _6));

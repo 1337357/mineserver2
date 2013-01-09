@@ -136,6 +136,7 @@ SET(mineserver_source
   src/mineserver/network/protocol/notch/packet/0x83.cpp
   src/mineserver/network/protocol/notch/packet/0xC8.cpp
   src/mineserver/network/protocol/notch/packet/0xC9.cpp
+  src/mineserver/network/protocol/notch/packet/0xFC.cpp
   src/mineserver/network/protocol/notch/packet/0xFD.cpp
   src/mineserver/network/protocol/notch/packet/0xFE.cpp
   src/mineserver/network/protocol/notch/packet/0xFF.cpp
@@ -166,5 +167,6 @@ TARGET_LINK_LIBRARIES(mineserver
   ${ICONV_LIBRARIES}
   ${NOISE_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
-  cryptopp
+  crypto
+  ssl
 )

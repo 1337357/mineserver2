@@ -57,6 +57,7 @@
 #include <mineserver/network/message/serverlistping.h>
 #include <mineserver/network/message/kick.h>
 #include <mineserver/network/message/encryptionrequest.h>
+#include <mineserver/network/message/encryptionresponse.h>
 #include <mineserver/game.h>
 #include <mineserver/game/object/slot.h>
 
@@ -164,17 +165,31 @@ void Mineserver::Game::messageWatcherHandshake(Mineserver::Game::pointer_t game,
   const Mineserver::Network_Message_Handshake* msg = reinterpret_cast<Mineserver::Network_Message_Handshake*>(&(*message));
   std::cout << msg->username << " is attempting to connect to: " << msg->hostname <<":"<< msg->port << " with protocol version: "<< (int)msg->protocolVersion << std::endl;
 
+  const int16_t tokenLength = 4;
+
+  unsigned char * cRandom;
+
+  cRandom = new unsigned char[tokenLength]; // just temporary
+
+  for(int i=0;i<tokenLength;i++)
+  {
+    cRandom[i] = rand() % 256;
+  }
+
   boost::shared_ptr<Mineserver::Network_Message_EncryptionRequest> response = boost::make_shared<Mineserver::Network_Message_EncryptionRequest>();
   response->mid = 0xFD;
   response->serverId = "-";//need to generate server id for online mode
-  response->publicKeyLength = NULL; //fixme - add size of byte array
-  //response->publicKey = NULL; //fixme - add the PK array ; //authentication->getPublicKey();
-  response->verifyTokenLength = 4;
-  //response->verifyToken = NULL; //fixme - byte array here too.
-
+  response->publicKeyLength = authentication->getPublicKeyLength() - 36; //ignore some padding from end
+  response->publicKey = authentication->getPublicKey() + 28; //remove more padding from start
+  response->verifyTokenLength = tokenLength;
+  response->verifyToken = cRandom; //temp random chars
   client->outgoing().push_back(response);
+}
 
-
+void Mineserver::Game::messageWatcherEncryptionResponse(Mineserver::Game::pointer_t game, Mineserver::Network_Client::pointer_t client, Mineserver::Network_Message::pointer_t message)
+{
+  std::cout << "EncryptionResponse watcher called!" << std::endl;
+  const Mineserver::Network_Message_EncryptionResponse* msg = reinterpret_cast<Mineserver::Network_Message_EncryptionResponse*>(&(*message));
 
 }
 

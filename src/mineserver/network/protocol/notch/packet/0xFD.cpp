@@ -38,16 +38,20 @@ int Mineserver::Network_Protocol_Notch_Packet_0xFD::_read(Mineserver::Network_Pr
 
 int Mineserver::Network_Protocol_Notch_Packet_0xFD::_write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message)
 {
+
   const Mineserver::Network_Message_EncryptionRequest* msg = static_cast<const Mineserver::Network_Message_EncryptionRequest*>(&message);
+  std::cout << "PK len: " << msg->publicKeyLength << " Token len: " << msg->verifyTokenLength << std::endl;
   ps << msg->mid << msg->serverId << msg->publicKeyLength;
+
   //send each byte of the public key array to the stream.
-  for(unsigned int i = 0; i < msg->publicKeyLength; i++){
+  for(int i = 0; i < msg->publicKeyLength; i++){
     ps << msg->publicKey[i];
   }
   //send the length of the 'encryption bytes'
   ps << msg->verifyTokenLength;
+
   //now send each byte of the encryption bytes array one at a time
-  for(unsigned int i = 0; i < msg->verifyTokenLength; i++){
+  for(int i = 0; i < msg->verifyTokenLength; i++){
     ps << msg->verifyToken[i];
   }
   return STATE_GOOD;

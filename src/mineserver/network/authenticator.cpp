@@ -25,51 +25,66 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <iostream>
-#include <sstream>
+#include <time.h>
+#include <stdio.h>
 
-#include <cryptopp/osrng.h>
-#include <cryptopp/files.h>
-#include <cryptopp/queue.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/rsa.h>
 
 #include <mineserver/network/authenticator.h>
 
 Mineserver::Authenticator::Authenticator() {
+  SSL_load_error_strings();
 
   std::cout << "Generating 1024bit RSA key pair." << std::endl;
+  //initilize the pseudo-random number generator.
+  srand(time(NULL));
+  if((m_rsa = RSA_generate_key(1024, 17, NULL, NULL)) == NULL)
+  {
+    std::cout << "Key generation failed" << std::endl;
+    ERR_print_errors_fp(stdout);
+    exit(1);
+  }
 
-  CryptoPP::AutoSeededRandomPool rnd;
-  std::stringstream output;
+  //allocate and initialize a X509 certificate structure
+  m_x509 = X509_new();
+  m_privateKey = EVP_PKEY_new();
+  EVP_PKEY_assign_RSA(m_privateKey, m_rsa);
+  X509_set_version(m_x509,0);
+  X509_set_pubkey(m_x509, m_privateKey);
 
-  CryptoPP::ByteQueue bt;
-
-  privateKey.Initialize(rnd,1024,65537);
-
-  CryptoPP::RSA::PublicKey RSA_PublicKey(privateKey);
-  RSA_PublicKey.Save(bt);
-
-  CryptoPP::StringSink name(publicKey);
-  bt.CopyTo(name);
-  name.MessageEnd();
+  int len;
+  unsigned char *buf;
+  buf = NULL;
+  len = i2d_X509(m_x509, &buf);
+  std::cout << "Length of OpenSSL public key: " << len << std::endl;
+  for(int i = 0; i < len; i++){
+    printf("%x:", (int)buf[i]);
+  }
+  m_publicKeyLength = len;
+  m_publicKey = (uint8_t*)buf;
 }
 
 Mineserver::Authenticator::~Authenticator()
 {
-
+  X509_free(m_x509);
 }
 
-std::string Mineserver::Authenticator::getPublicKey()
+uint8_t* Mineserver::Authenticator::getPublicKey()
 {
-  return publicKey;
+  return m_publicKey;
 }
 
 int16_t Mineserver::Authenticator::getPublicKeyLength()
 {
-  return int16_t(publicKey.length());
+  return m_publicKeyLength;
 }
 
 void Mineserver::Authenticator::generateId()
 {
   //Need complete do for online mod
 }
+
 
 
