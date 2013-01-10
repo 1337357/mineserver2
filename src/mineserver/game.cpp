@@ -165,24 +165,13 @@ void Mineserver::Game::messageWatcherHandshake(Mineserver::Game::pointer_t game,
   const Mineserver::Network_Message_Handshake* msg = reinterpret_cast<Mineserver::Network_Message_Handshake*>(&(*message));
   std::cout << msg->username << " is attempting to connect to: " << msg->hostname <<":"<< msg->port << " with protocol version: "<< (int)msg->protocolVersion << std::endl;
 
-  const int16_t tokenLength = 4;
-
-  unsigned char * cRandom;
-
-  cRandom = new unsigned char[tokenLength]; // just temporary
-
-  for(int i=0;i<tokenLength;i++)
-  {
-    cRandom[i] = rand() % 256;
-  }
-
   boost::shared_ptr<Mineserver::Network_Message_EncryptionRequest> response = boost::make_shared<Mineserver::Network_Message_EncryptionRequest>();
   response->mid = 0xFD;
-  response->serverId = "-";//need to generate server id for online mode
+  response->serverId = "-"; //need to generate server id for online mode
   response->publicKeyLength = authentication->getPublicKeyLength() - 36; //ignore some padding from end
   response->publicKey = authentication->getPublicKey() + 28; //remove more padding from start
-  response->verifyTokenLength = tokenLength;
-  response->verifyToken = cRandom; //temp random chars
+  response->verifyTokenLength = authentication->getEncryptionBytesLength();
+  response->verifyToken = authentication->getEncryptionBytes();
   client->outgoing().push_back(response);
 }
 
@@ -191,6 +180,16 @@ void Mineserver::Game::messageWatcherEncryptionResponse(Mineserver::Game::pointe
   std::cout << "EncryptionResponse watcher called!" << std::endl;
   const Mineserver::Network_Message_EncryptionResponse* msg = reinterpret_cast<Mineserver::Network_Message_EncryptionResponse*>(&(*message));
 
+  /* Verify the encryption bytes to see if they match */
+  if(authentication->verifyEncryptionBytes(msg->verifyTokenLength, msg->verifyToken)){
+    std::cout << "Client verify token is correct" << std::endl;
+  }
+  else {
+    boost::shared_ptr<Mineserver::Network_Message_Kick> response = boost::make_shared<Mineserver::Network_Message_Kick>();
+    response->mid = 0xFF;
+    response->reason = "Encrypted verify token mismatch";
+    client->outgoing().push_back(response);
+  }
 }
 
 void Mineserver::Game::messageWatcherChat(Mineserver::Game::pointer_t game, Mineserver::Network_Client::pointer_t client, Mineserver::Network_Message::pointer_t message)
@@ -316,7 +315,6 @@ void Mineserver::Game::messageWatcherLogin(Mineserver::Game::pointer_t game, Min
     cclient->outgoing().push_back(playerListItemMessage);
     boost::shared_ptr<Mineserver::Network_Message_Chat> chatMessage = boost::make_shared<Mineserver::Network_Message_Chat>();
     chatMessage->mid = 0x03;
-    chatMessage->message += "§e";
     chatMessage->message += msg->username;
     chatMessage->message += " joined the game.";
     cclient->outgoing().push_back(chatMessage);

@@ -39,13 +39,13 @@ int Mineserver::Network_Protocol_Notch_Packet_0xFC::_read(Mineserver::Network_Pr
 
   ps >> msg->mid >> msg->sharedSecretLength;
   uint8_t shared_secret[msg->sharedSecretLength];
-  for(unsigned int i = 0; i < msg->sharedSecretLength; i++){
+  for(unsigned short i = 0; i < msg->sharedSecretLength; i++){
     ps >> shared_secret[i];
   }
   msg->sharedSecret = shared_secret;
   ps >> msg->verifyTokenLength;
   uint8_t verify_token[msg->verifyTokenLength];
-  for(unsigned int i = 0; i < msg->verifyTokenLength; i++){
+  for(unsigned short i = 0; i < msg->verifyTokenLength; i++){
     ps >> verify_token[i];
   }
   msg->verifyToken = verify_token;
@@ -55,14 +55,14 @@ int Mineserver::Network_Protocol_Notch_Packet_0xFC::_read(Mineserver::Network_Pr
       "sharedSecretLength: " << (int)msg->sharedSecretLength <<
       "\nsharedSecret:" << std::endl;
   for(int i = 0; i < msg->sharedSecretLength; i++){
-    printf("%2x", (int)msg->sharedSecret[i]);
+    printf("%02x:", (int)msg->sharedSecret[i]);
   }
 
   std::cout << "\nverifyTokenLength: " <<
       msg->verifyTokenLength <<
       "\nverifyToken: " << std::endl;
   for(int i = 0; i < (int)msg->verifyTokenLength; i++){
-    printf("%2x", (int)msg->verifyToken[i]);
+    printf("%02x:", (int)msg->verifyToken[i]);
   }
   printf("\n");
 

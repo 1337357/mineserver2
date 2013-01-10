@@ -923,8 +923,7 @@ int Mineserver::Network_Protocol_Notch_Protocol::compose(std::vector<uint8_t>& b
 
 	printf("Bytes: "); //debug outgoing bytes
 	for (unsigned int i = m_packetStream.getPos(); i < m_packetStream.getBuffer()->size(); ++i) {
-		printf("%02x", m_packetStream.getBuffer()->at(i));
-    printf(" ");
+		printf("%02x:", m_packetStream.getBuffer()->at(i));
 	}
 	printf("\n");
 

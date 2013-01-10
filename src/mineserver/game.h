@@ -52,7 +52,7 @@ namespace Mineserver
   {
   public:
     typedef boost::shared_ptr<Mineserver::Game> pointer_t;
-    typedef boost::shared_ptr<Mineserver::Authenticator> authenticator_t;
+    typedef boost::shared_ptr<Mineserver::Network_Authenticator> authenticator_t;
     typedef std::vector<Mineserver::Network_Client::pointer_t> clientList_t;
     typedef std::map<std::string,Mineserver::Game_Player::pointer_t> playerList_t;
     typedef std::map<Mineserver::Network_Client::pointer_t,Mineserver::Game_Player::pointer_t> clientMap_t;
@@ -198,11 +198,11 @@ namespace Mineserver
       return m_clientMap[client];
     }
 
-    void setAuth(Mineserver::Authenticator::pointer_t auth)
+    void setAuth(Mineserver::Network_Authenticator::pointer_t auth)
     {
 			authentication = auth;
     }
-    Mineserver::Authenticator::pointer_t getAuth()
+    Mineserver::Network_Authenticator::pointer_t getAuth()
     {
       return authentication;
     }

@@ -140,7 +140,7 @@ void Mineserver::Network_Client::handleRead(const boost::system::error_code& e, 
 
     printf("Got bytes: ");
     for (boost::array<uint8_t, 8192>::iterator it=m_tmp.begin();it!=m_tmp.begin()+n;++it) {
-      printf("%02x", *it);
+      printf("%02x:", *it);
     }
     printf("\n");
 

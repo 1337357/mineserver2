@@ -52,7 +52,7 @@ int main()
 
   game->setWorld(0, boost::make_shared<Mineserver::World>());
   game->getWorld(0)->addGenerator(boost::make_shared<Mineserver::World_Generator_Flatlands>());
-  game->setAuth(boost::make_shared<Mineserver::Authenticator>());
+  game->setAuth(boost::make_shared<Mineserver::Network_Authenticator>());
 
   game->addMessageWatcher(0x00, boost::bind(&Mineserver::Game::messageWatcherKeepAlive, game, _1, _2, _3));
   game->addMessageWatcher(0x01, boost::bind(&Mineserver::Game::messageWatcherLogin, game, _1, _2, _3));

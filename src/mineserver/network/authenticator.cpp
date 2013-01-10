@@ -34,7 +34,8 @@
 
 #include <mineserver/network/authenticator.h>
 
-Mineserver::Authenticator::Authenticator() {
+Mineserver::Network_Authenticator::Network_Authenticator()
+{
   SSL_load_error_strings();
 
   std::cout << "Generating 1024bit RSA key pair." << std::endl;
@@ -43,7 +44,7 @@ Mineserver::Authenticator::Authenticator() {
   if((m_rsa = RSA_generate_key(1024, 17, NULL, NULL)) == NULL)
   {
     std::cout << "Key generation failed" << std::endl;
-    ERR_print_errors_fp(stdout);
+    ERR_print_errors_fp(stdout); //TODO - switch to logging class
     exit(1);
   }
 
@@ -58,33 +59,82 @@ Mineserver::Authenticator::Authenticator() {
   unsigned char *buf;
   buf = NULL;
   len = i2d_X509(m_x509, &buf);
-  std::cout << "Length of OpenSSL public key: " << len << std::endl;
   for(int i = 0; i < len; i++){
     printf("%x:", (int)buf[i]);
   }
   m_publicKeyLength = len;
   m_publicKey = (uint8_t*)buf;
+
+  generateEncryptionBytes(4);
 }
 
-Mineserver::Authenticator::~Authenticator()
+Mineserver::Network_Authenticator::~Network_Authenticator()
 {
   X509_free(m_x509);
 }
 
-uint8_t* Mineserver::Authenticator::getPublicKey()
+uint8_t* Mineserver::Network_Authenticator::getPublicKey()
 {
   return m_publicKey;
 }
 
-int16_t Mineserver::Authenticator::getPublicKeyLength()
+int16_t Mineserver::Network_Authenticator::getPublicKeyLength()
 {
   return m_publicKeyLength;
 }
 
-void Mineserver::Authenticator::generateId()
+void Mineserver::Network_Authenticator::generateId()
 {
   //Need complete do for online mod
 }
 
+void Mineserver::Network_Authenticator::generateEncryptionBytes(short length)
+{
+  unsigned char * cRandom;
+  cRandom = new unsigned char[length];
+
+  for(int i=0;i<length;i++)
+  {
+    cRandom[i] = rand() % 256;
+  }
+  m_encryptionBytesLength = (uint16_t) length;
+  m_encryptionBytes = (uint8_t*)cRandom;
+}
+
+bool Mineserver::Network_Authenticator::verifyEncryptionBytes(short length, const uint8_t* encryptedBytes){
+  uint8_t buffer[1024];
+  memset(buffer, 0, 1024);
+  int resultLength = RSA_private_decrypt(length, encryptedBytes, buffer, m_rsa , RSA_PKCS1_PADDING);
+  std::cout << "start lenght: " << length << std::endl;
+  std::cout << "decrypted bytes length: " << resultLength << std::endl;
+
+  //test
+  unsigned char buf[1024];
+  memset(buf, 0, 1024);
+  int testLen = RSA_public_encrypt(m_encryptionBytesLength, (unsigned char*)m_encryptionBytes, buf, m_rsa, RSA_PKCS1_PADDING);
+  std::cout << "sizeof result: " << sizeof buf << std::endl;
+  for(unsigned int i = 0; i < sizeof buf; i++){
+    printf("%02x:", buf[i]);
+  }
+  printf("\nend\n");
+
+  /* Check that the length is right and the bytes match once decrypted using RSA */
+  if(resultLength == 4 && std::string((char *)buffer) == std::string((char *)m_encryptionBytes)){
+    return true;
+  }
+  else if(resultLength < 0){
+    ERR_print_errors_fp(stdout);
+  }
+
+  return false;
+}
+
+uint8_t* Mineserver::Network_Authenticator::getEncryptionBytes(){
+  return m_encryptionBytes;
+}
+
+uint16_t Mineserver::Network_Authenticator::getEncryptionBytesLength(){
+  return m_encryptionBytesLength;
+}
 
 

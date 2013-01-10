@@ -40,7 +40,7 @@ namespace Mineserver {
    /**
    * Generates keys and server ID information.
    */
-  class Authenticator : public boost::enable_shared_from_this<Mineserver::Authenticator>
+  class Network_Authenticator : public boost::enable_shared_from_this<Mineserver::Network_Authenticator>
   {
   private:
     std::string serverId;
@@ -49,27 +49,31 @@ namespace Mineserver {
     EVP_PKEY* m_privateKey;
     uint8_t* m_publicKey;
     uint16_t m_publicKeyLength;
+    uint16_t m_encryptionBytesLength;
+    uint8_t* m_encryptionBytes;
 
 
     /**
      * Generates the server id which is sent to the client
      * for minecraft.net session validation.
-     * @return
      */
     void generateId();
+    void generateEncryptionBytes(short length);
 
   public:
-    typedef boost::shared_ptr<Mineserver::Authenticator> pointer_t;
+    typedef boost::shared_ptr<Mineserver::Network_Authenticator> pointer_t;
 
-    Authenticator();
-    virtual ~Authenticator();
+    Network_Authenticator();
+    virtual ~Network_Authenticator();
 
     uint8_t* getPublicKey();
     int16_t getPublicKeyLength();
+    uint8_t* getEncryptionBytes();
+    uint16_t getEncryptionBytesLength();
 
     int decryptMessage(std::string* message);
     int encryptMessage(std::string* message);
-
+    bool verifyEncryptionBytes(short length, const uint8_t*);
 
   };
 }
