@@ -102,30 +102,17 @@ void Mineserver::Network_Authenticator::generateEncryptionBytes(short length)
 }
 
 bool Mineserver::Network_Authenticator::verifyEncryptionBytes(short length, const uint8_t* encryptedBytes){
-  uint8_t buffer[1024];
-  memset(buffer, 0, 1024);
+  uint8_t buffer[length];
+  memset(buffer, 0, length);
   int resultLength = RSA_private_decrypt(length, encryptedBytes, buffer, m_rsa , RSA_PKCS1_PADDING);
-  std::cout << "start lenght: " << length << std::endl;
-  std::cout << "decrypted bytes length: " << resultLength << std::endl;
 
-  //test
-  unsigned char buf[1024];
-  memset(buf, 0, 1024);
-  int testLen = RSA_public_encrypt(m_encryptionBytesLength, (unsigned char*)m_encryptionBytes, buf, m_rsa, RSA_PKCS1_PADDING);
-  std::cout << "sizeof result: " << sizeof buf << std::endl;
-  for(unsigned int i = 0; i < sizeof buf; i++){
-    printf("%02x:", buf[i]);
-  }
-  printf("\nend\n");
-
-  /* Check that the length is right and the bytes match once decrypted using RSA */
+  // Check that the length is right and the bytes match once decrypted using RSA
   if(resultLength == 4 && std::string((char *)buffer) == std::string((char *)m_encryptionBytes)){
     return true;
   }
   else if(resultLength < 0){
     ERR_print_errors_fp(stdout);
   }
-
   return false;
 }
 
@@ -135,6 +122,25 @@ uint8_t* Mineserver::Network_Authenticator::getEncryptionBytes(){
 
 uint16_t Mineserver::Network_Authenticator::getEncryptionBytesLength(){
   return m_encryptionBytesLength;
+}
+
+uint8_t* Mineserver::Network_Authenticator::decryptSymmetricKey(short length, uint8_t* bytes){
+  uint8_t buffer[length];
+  memset(buffer, 0, length);
+  int resultLength = RSA_private_decrypt(length, bytes, buffer, m_rsa , RSA_PKCS1_PADDING);
+
+  if(resultLength == 16){
+    //the result should be 16 bytes in length
+    uint8_t* de = new uint8_t[16];
+    for(int i = 0; i < 16; i++){
+      de[i] = buffer[i];
+    }
+
+    return de;
+  }
+
+  printf("Result of decrypted symmetric key was: %i\n Something went WRONG!\n", resultLength);
+  return NULL;
 }
 
 

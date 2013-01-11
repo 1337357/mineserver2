@@ -29,6 +29,8 @@
 #define MINESERVER_NETWORK_PACKET_ENCRYPTIONRESPONSE_H
 
 #include <string>
+#include <iostream>
+#include <stdio.h>
 
 #include <mineserver/byteorder.h>
 #include <mineserver/network/message.h>

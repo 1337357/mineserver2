@@ -175,3 +175,20 @@ void Mineserver::Network_Client::handleWrite(const boost::system::error_code& e,
     write();
   }
 }
+/**
+ * Takes the RSA decrypted symmetric key, stores it and starts encrypted
+ * stream traffic.
+ */
+void Mineserver::Network_Client::startEncryption(uint8_t* symmetricKey)
+{
+  m_symmetricKey = symmetricKey;
+  //unsigned char key[16], iv[16];
+  //memcpy(&iv,secret.c_str(),16);
+  //memcpy(&key,secret.c_str(),16);
+  EVP_CIPHER_CTX_init(&m_encryptionContext);
+  EVP_EncryptInit_ex(&m_encryptionContext, EVP_aes_128_cfb8(), NULL, m_symmetricKey, m_symmetricKey);
+  EVP_CIPHER_CTX_init(&m_decryptionContext);
+  EVP_DecryptInit_ex(&m_decryptionContext, EVP_aes_128_cfb8(), NULL, m_symmetricKey, m_symmetricKey);
+
+  m_encrypted = true;
+}

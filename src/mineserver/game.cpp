@@ -178,11 +178,31 @@ void Mineserver::Game::messageWatcherHandshake(Mineserver::Game::pointer_t game,
 void Mineserver::Game::messageWatcherEncryptionResponse(Mineserver::Game::pointer_t game, Mineserver::Network_Client::pointer_t client, Mineserver::Network_Message::pointer_t message)
 {
   std::cout << "EncryptionResponse watcher called!" << std::endl;
+
   const Mineserver::Network_Message_EncryptionResponse* msg = reinterpret_cast<Mineserver::Network_Message_EncryptionResponse*>(&(*message));
 
   /* Verify the encryption bytes to see if they match */
   if(authentication->verifyEncryptionBytes(msg->verifyTokenLength, msg->verifyToken)){
     std::cout << "Client verify token is correct" << std::endl;
+    //Now would be the time to verify the client with session.minecraft.net
+    //yeaah, nah...
+    boost::shared_ptr<Mineserver::Network_Message_EncryptionResponse> response = boost::make_shared<Mineserver::Network_Message_EncryptionResponse>();
+    response->mid = 0xFC;
+    response->sharedSecretLength = 0;
+    response->sharedSecret = NULL;
+    response->verifyTokenLength = 0;
+    response->verifyToken = NULL;
+    client->outgoing().push_back(response);
+
+    uint8_t* symmetric = authentication->decryptSymmetricKey(msg->sharedSecretLength, msg->sharedSecret);
+
+    printf("SymmetricKey is from GAME: \n");
+    for(int i = 0; i < 16; i++){
+      printf("%02x:", symmetric[i]);
+    }
+    printf("\n/SymmetricKey is from GAME: \n");
+
+    client->startEncryption(symmetric);
   }
   else {
     boost::shared_ptr<Mineserver::Network_Message_Kick> response = boost::make_shared<Mineserver::Network_Message_Kick>();

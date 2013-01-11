@@ -38,6 +38,10 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/aes.h>
+
 #include <mineserver/network/message.h>
 #include <mineserver/network/protocol.h>
 
@@ -60,6 +64,13 @@ namespace Mineserver
     bool m_alive;
     uint32_t m_inactiveTicks;
     uint32_t m_inactiveTicksReply;
+    /**
+     * For use both ways to decrypt/encrypt the AES stream.
+     */
+    uint8_t* m_symmetricKey;
+    EVP_CIPHER_CTX m_encryptionContext;
+    EVP_CIPHER_CTX m_decryptionContext;
+    bool m_encrypted;
 
   public:
     Network_Client(boost::asio::io_service* service, Mineserver::Network_Protocol::pointer_t protocol) : m_socket(*service),m_protocol(protocol),m_writing(false),m_alive(true),m_inactiveTicks(0),m_inactiveTicksReply(0) {}
@@ -105,6 +116,7 @@ namespace Mineserver
     void stop();
     void timedOut();
     void write();
+    void startEncryption(uint8_t* symmetricKey);
 
   private:
     void handleRead(const boost::system::error_code& e, size_t n);

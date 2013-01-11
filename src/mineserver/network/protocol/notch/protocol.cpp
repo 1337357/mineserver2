@@ -901,6 +901,12 @@ int Mineserver::Network_Protocol_Notch_Protocol::compose(std::vector<uint8_t>& b
       int packetState = packet.write(m_packetStream, message);
       break;
     }
+    case 0xFC:
+    {
+      Mineserver::Network_Protocol_Notch_Packet_0xFC packet;
+      int packetState = packet.write(m_packetStream, message);
+      break;
+    }
     case 0xFD:
     {
       Mineserver::Network_Protocol_Notch_Packet_0xFD packet;

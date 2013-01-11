@@ -4,12 +4,12 @@
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  * Redistributions of source code must retain the above copyright
+ * Redistributions of source code must retain the above copyright
     notice, this list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above copyright
+ * Redistributions in binary form must reproduce the above copyright
     notice, this list of conditions and the following disclaimer in the
     documentation and/or other materials provided with the distribution.
-  * Neither the name of the The Mineserver Project nor the
+ * Neither the name of the The Mineserver Project nor the
     names of its contributors may be used to endorse or promote products
     derived from this software without specific prior written permission.
 
@@ -23,7 +23,7 @@
   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #include <iostream>
 #include <mineserver/byteorder.h>
@@ -33,22 +33,23 @@
 
 int Mineserver::Network_Protocol_Notch_Packet_0xFC::_read(Mineserver::Network_Protocol_Notch_PacketStream& ps, Mineserver::Network_Message** message)
 {
-  //Mineserver::Network_Message_Kick* msg = new Mineserver::Network_Message_Kick;
   Mineserver::Network_Message_EncryptionResponse* msg = new Mineserver::Network_Message_EncryptionResponse;
   *message = msg;
 
   ps >> msg->mid >> msg->sharedSecretLength;
-  uint8_t shared_secret[msg->sharedSecretLength];
+
+  msg->sharedSecret = new uint8_t[msg->sharedSecretLength];
   for(unsigned short i = 0; i < msg->sharedSecretLength; i++){
-    ps >> shared_secret[i];
+    ps >> msg->sharedSecret[i];
   }
-  msg->sharedSecret = shared_secret;
+
   ps >> msg->verifyTokenLength;
-  uint8_t verify_token[msg->verifyTokenLength];
+
+  msg->verifyToken = new uint8_t[msg->verifyTokenLength];
+
   for(unsigned short i = 0; i < msg->verifyTokenLength; i++){
-    ps >> verify_token[i];
+    ps >> msg->verifyToken[i];
   }
-  msg->verifyToken = verify_token;
 
   //display the data for testing purposes.
   std::cout << "Encryption Response data: \n" <<
@@ -64,14 +65,12 @@ int Mineserver::Network_Protocol_Notch_Packet_0xFC::_read(Mineserver::Network_Pr
   for(int i = 0; i < (int)msg->verifyTokenLength; i++){
     printf("%02x:", (int)msg->verifyToken[i]);
   }
-  printf("\n");
 
   return STATE_GOOD;
 }
 
 int Mineserver::Network_Protocol_Notch_Packet_0xFC::_write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message)
 {
-  //const Mineserver::Network_Message_Kick* msg = static_cast<const Mineserver::Network_Message_Kick*>(&message);
   const Mineserver::Network_Message_EncryptionResponse* msg = static_cast<const Mineserver::Network_Message_EncryptionResponse*>(&message);
 
   ps << msg->mid << msg->sharedSecretLength;

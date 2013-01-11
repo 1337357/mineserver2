@@ -74,6 +74,7 @@ namespace Mineserver {
     int decryptMessage(std::string* message);
     int encryptMessage(std::string* message);
     bool verifyEncryptionBytes(short length, const uint8_t*);
+    uint8_t* decryptSymmetricKey(short length, uint8_t* encryptedBytes);
 
   };
 }
