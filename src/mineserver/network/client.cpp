@@ -136,7 +136,18 @@ void Mineserver::Network_Client::write()
 void Mineserver::Network_Client::handleRead(const boost::system::error_code& e, size_t n)
 {
   if (!e) {
+    if(this->m_encrypted){
+      std::cout << "Attempting to decrypt message: " << std::endl;
+      //uint8_t encrypted = (uint8_t*)m_tmp.c_array();
+      //uint8_t decrypted[n];
+      //EVP_DecryptUpdate(this->m_decryptionContext, n, &p_len, (const uint8_t *)cpBUFCRYPT, read);
+    }
+    else{
+      //just read the message as usual
+    }
+    //this adds the temp bytes to the buffer as is - will be changed for decryption
     m_incomingBuffer.insert(m_incomingBuffer.end(), m_tmp.begin(), m_tmp.begin() + n);
+    std::cout << "Size of n " << n << std::endl;
 
     printf("Got bytes: ");
     for (boost::array<uint8_t, 8192>::iterator it=m_tmp.begin();it!=m_tmp.begin()+n;++it) {
@@ -165,6 +176,9 @@ void Mineserver::Network_Client::handleRead(const boost::system::error_code& e, 
 
 void Mineserver::Network_Client::handleWrite(const boost::system::error_code& e, size_t n)
 {
+  if(this->m_encrypted){
+    //same deal for writing bytes to the stream
+  }
 	m_outgoingBuffer.erase(m_outgoingBuffer.begin(), m_outgoingBuffer.begin() + n);
 
   printf("Wrote %lu bytes, %lu left\n", n, m_outgoingBuffer.size());
