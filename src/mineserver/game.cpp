@@ -58,6 +58,7 @@
 #include <mineserver/network/message/kick.h>
 #include <mineserver/network/message/encryptionrequest.h>
 #include <mineserver/network/message/encryptionresponse.h>
+#include <mineserver/network/message/clientstatus.h>
 #include <mineserver/game.h>
 #include <mineserver/game/object/slot.h>
 
@@ -127,14 +128,16 @@ void Mineserver::Game::run()
       m_lastPlayerListItemUpdate++;
     }
 
-    std::cout << "There are " << client->incoming().size() << " messages." << std::endl;
+    size_t incoming = client->incoming().size();
+    if(incoming > 0){
+      std::cout << "There are " << client->incoming().size() << " messages." << std::endl;
+    }
 
     for (std::vector<Mineserver::Network_Message::pointer_t>::iterator message_it=client->incoming().begin();message_it!=client->incoming().end();++message_it) {
       Mineserver::Network_Message::pointer_t message = *message_it;
       m_messageWatchers[message->mid](shared_from_this(), client, message);
     }
 
-    std::cout << "Watchers done." << std::endl;
 
     client->incoming().clear();
 
@@ -196,12 +199,6 @@ void Mineserver::Game::messageWatcherEncryptionResponse(Mineserver::Game::pointe
 
     uint8_t* symmetric = authentication->decryptSymmetricKey(msg->sharedSecretLength, msg->sharedSecret);
 
-    printf("SymmetricKey is from GAME: \n");
-    for(int i = 0; i < 16; i++){
-      printf("%02x:", symmetric[i]);
-    }
-    printf("\n/SymmetricKey is from GAME: \n");
-
     client->startEncryption(symmetric);
   }
   else {
@@ -209,6 +206,20 @@ void Mineserver::Game::messageWatcherEncryptionResponse(Mineserver::Game::pointe
     response->mid = 0xFF;
     response->reason = "Encrypted verify token mismatch";
     client->outgoing().push_back(response);
+  }
+}
+
+void Mineserver::Game::messageWatcherClientStatus(Mineserver::Game::pointer_t game, Mineserver::Network_Client::pointer_t client, Mineserver::Network_Message::pointer_t message)
+{
+  std::cout << "Client Status Watcher called!" << std::endl;
+  const Mineserver::Network_Message_ClientStatus* msg = reinterpret_cast<Mineserver::Network_Message_ClientStatus*>(&(*message));
+  //do everything that the login watcher used to do. player will have to be instantiated in the handshake packet now.
+  //todo - send 0x01, (messageWatcherLogin) shouldn't be a watcher anymore because the client doesn't send it.
+  if(msg->payload == 0x00){
+    //ready to login.
+  }
+  else if (msg->payload){
+    //ready to be respawn.
   }
 }
 

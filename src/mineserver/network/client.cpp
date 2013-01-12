@@ -116,7 +116,31 @@ void Mineserver::Network_Client::write()
 
   m_outgoing.clear();
 
-  printf("We want to send %u bytes\n", m_outgoingBuffer.size());
+  if(false)
+  {
+    std::cout << "crypted write() called" << std::endl;
+    std::cout << "Attempting to decrypt incoming data" << std::endl;
+    uint8_t decrypted[m_outgoingBuffer.size()];
+    for(unsigned int i = 0; i < m_outgoingBuffer.size(); i++){
+      decrypted[i] = m_outgoingBuffer[i];
+    }
+    uint8_t* encrypted;
+    int encryptedLength;
+    encrypted = new uint8_t[m_outgoingBuffer.size()];
+
+    EVP_EncryptUpdate(&m_encryptionContext, decrypted, &encryptedLength, (const uint8_t*)encrypted, m_outgoingBuffer.size());
+
+    m_outgoingBuffer.clear();
+    for(int i = 0; i < encryptedLength; i++){
+      m_outgoingBuffer.push_back(encrypted[i]);
+    }
+
+    delete[] encrypted;
+  }
+
+  if(m_outgoingBuffer.size() > 0){
+    printf("We want to send %i bytes\n", m_outgoingBuffer.size());
+  }
 
   if (!m_writing)
   {
@@ -138,24 +162,37 @@ void Mineserver::Network_Client::handleRead(const boost::system::error_code& e, 
 {
   if (!e) {
     if(this->m_encrypted){
-      std::cout << "Attempting to decrypt message: " << std::endl;
-      //uint8_t encrypted = (uint8_t*)m_tmp.c_array();
-      //uint8_t decrypted[n];
-      //EVP_DecryptUpdate(this->m_decryptionContext, n, &p_len, (const uint8_t *)cpBUFCRYPT, read);
-    }
-    else{
-      //just read the message as usual
-    }
-    //this adds the temp bytes to the buffer as is - will be changed for decryption
-    m_incomingBuffer.insert(m_incomingBuffer.end(), m_tmp.begin(), m_tmp.begin() + n);
-    std::cout << "Size of n " << n << std::endl;
+      std::cout << "Attempting to decrypt incoming data" << std::endl;
+      uint8_t* encrypted = (uint8_t*)m_tmp.c_array();
+      uint8_t* decrypted;
+      int decryptedLength;
+      decrypted = new uint8_t[n];
 
-    printf("Got bytes: ");
-    for (boost::array<uint8_t, 8192>::iterator it=m_tmp.begin();it!=m_tmp.begin()+n;++it) {
-      printf("%02x:", *it);
-    }
-    printf("\n");
+      EVP_DecryptUpdate(&m_decryptionContext, decrypted, &decryptedLength, (const uint8_t*)encrypted, n);
 
+      m_incomingBuffer.insert(m_incomingBuffer.end(), decrypted, decrypted + n);
+
+      std::cout << "Got bytes: ";
+
+      for(unsigned int i = 0; i < n; i++){
+        std::cout << std::hex << (int)decrypted[i];
+      }
+      std::cout << std::endl;
+
+      delete[] decrypted;
+    }
+
+    else {
+      //not encrypted yet, just read the message as usual
+      m_incomingBuffer.insert(m_incomingBuffer.end(), m_tmp.begin(), m_tmp.begin() + n);
+      printf("Got bytes: ");
+      for (boost::array<uint8_t, 8192>::iterator it=m_tmp.begin();it!=m_tmp.begin()+n;++it) {
+        printf("%02x:", *it);
+      }
+      printf("\n");
+    }
+
+    //now try make sense of the bytes and convert them into message objects
     int state;
     do {
       Mineserver::Network_Message* message = NULL;
@@ -177,13 +214,10 @@ void Mineserver::Network_Client::handleRead(const boost::system::error_code& e, 
 
 void Mineserver::Network_Client::handleWrite(const boost::system::error_code& e, size_t n)
 {
-  if(this->m_encrypted){
-    //same deal for writing bytes to the stream
-  }
 	m_outgoingBuffer.erase(m_outgoingBuffer.begin(), m_outgoingBuffer.begin() + n);
-
-  printf("Wrote %u bytes, %u left\n", n, m_outgoingBuffer.size());
-
+	if(n > 0 && m_outgoingBuffer.size() > 0){
+    printf("Wrote %u bytes, %u left\n", n, m_outgoingBuffer.size());
+	}
   m_writing = false;
 
   if (m_outgoingBuffer.size() > 0) {
@@ -197,9 +231,6 @@ void Mineserver::Network_Client::handleWrite(const boost::system::error_code& e,
 void Mineserver::Network_Client::startEncryption(uint8_t* symmetricKey)
 {
   m_symmetricKey = symmetricKey;
-  //unsigned char key[16], iv[16];
-  //memcpy(&iv,secret.c_str(),16);
-  //memcpy(&key,secret.c_str(),16);
   EVP_CIPHER_CTX_init(&m_encryptionContext);
   EVP_EncryptInit_ex(&m_encryptionContext, EVP_aes_128_cfb8(), NULL, m_symmetricKey, m_symmetricKey);
   EVP_CIPHER_CTX_init(&m_decryptionContext);

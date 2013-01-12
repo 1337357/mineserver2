@@ -51,21 +51,6 @@ int Mineserver::Network_Protocol_Notch_Packet_0xFC::_read(Mineserver::Network_Pr
     ps >> msg->verifyToken[i];
   }
 
-  //display the data for testing purposes.
-  std::cout << "Encryption Response data: \n" <<
-      "sharedSecretLength: " << (int)msg->sharedSecretLength <<
-      "\nsharedSecret:" << std::endl;
-  for(int i = 0; i < msg->sharedSecretLength; i++){
-    printf("%02x:", (int)msg->sharedSecret[i]);
-  }
-
-  std::cout << "\nverifyTokenLength: " <<
-      msg->verifyTokenLength <<
-      "\nverifyToken: " << std::endl;
-  for(int i = 0; i < (int)msg->verifyTokenLength; i++){
-    printf("%02x:", (int)msg->verifyToken[i]);
-  }
-
   return STATE_GOOD;
 }
 

@@ -40,7 +40,6 @@ int Mineserver::Network_Protocol_Notch_Packet_0xFD::_write(Mineserver::Network_P
 {
 
   const Mineserver::Network_Message_EncryptionRequest* msg = static_cast<const Mineserver::Network_Message_EncryptionRequest*>(&message);
-  std::cout << "PK len: " << msg->publicKeyLength << " Token len: " << msg->verifyTokenLength << std::endl;
   ps << msg->mid << msg->serverId << msg->publicKeyLength;
 
   //send each byte of the public key array to the stream.

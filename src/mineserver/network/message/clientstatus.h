@@ -25,23 +25,22 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef MINESERVER_NETWORK_PACKET_CLIENTSTATUS_H
+#define MINESERVER_NETWORK_PACKET_CLIENTSTATUS_H
+
 #include <mineserver/byteorder.h>
-#include <mineserver/network/message/clientstatus.h>
-#include <mineserver/network/protocol/notch/packet.h>
-#include <mineserver/network/protocol/notch/packet/0xCD.h>
+#include <mineserver/network/message.h>
 
-int Mineserver::Network_Protocol_Notch_Packet_0xCD::_read(Mineserver::Network_Protocol_Notch_PacketStream& ps, Mineserver::Network_Message** message)
+namespace Mineserver
 {
-  Mineserver::Network_Message_ClientStatus* msg = new Mineserver::Network_Message_ClientStatus;
-  *message = msg;
-
-  ps >> msg->mid >> msg->payload;
-
-  return STATE_GOOD;
+  /**
+   * Client to server - Sent when the client is ready to complete login and
+   * when the client is ready to respawn after death.
+   */
+  struct Network_Message_ClientStatus : public Mineserver::Network_Message
+  {
+    uint8_t payload;
+  };
 }
 
-int Mineserver::Network_Protocol_Notch_Packet_0xCD::_write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message)
-{
-  //this packet is not sent.
-  return STATE_GOOD;
-}
+#endif

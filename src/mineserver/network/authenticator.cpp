@@ -60,9 +60,6 @@ Mineserver::Network_Authenticator::Network_Authenticator()
   unsigned char *buf;
   buf = NULL;
   len = i2d_X509(m_x509, &buf);
-  for(int i = 0; i < len; i++){
-    printf("%x:", (int)buf[i]);
-  }
   m_publicKeyLength = len;
   m_publicKey = (uint8_t*)buf;
 
