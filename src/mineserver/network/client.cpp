@@ -29,6 +29,7 @@
 #include <vector>
 #include <iostream>
 #include <cstdio>
+#include <stdint.h>
 
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -115,7 +116,7 @@ void Mineserver::Network_Client::write()
 
   m_outgoing.clear();
 
-  printf("We want to send %lu bytes\n", m_outgoingBuffer.size());
+  printf("We want to send %u bytes\n", m_outgoingBuffer.size());
 
   if (!m_writing)
   {
@@ -181,7 +182,7 @@ void Mineserver::Network_Client::handleWrite(const boost::system::error_code& e,
   }
 	m_outgoingBuffer.erase(m_outgoingBuffer.begin(), m_outgoingBuffer.begin() + n);
 
-  printf("Wrote %lu bytes, %lu left\n", n, m_outgoingBuffer.size());
+  printf("Wrote %u bytes, %u left\n", n, m_outgoingBuffer.size());
 
   m_writing = false;
 

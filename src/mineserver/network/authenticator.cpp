@@ -27,6 +27,7 @@
 #include <iostream>
 #include <time.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
