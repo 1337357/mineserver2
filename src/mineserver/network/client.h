@@ -117,6 +117,7 @@ namespace Mineserver
     void timedOut();
     void write();
     void startEncryption(uint8_t* symmetricKey);
+    void setEncrypted(bool state);
 
   private:
     void handleRead(const boost::system::error_code& e, size_t n);

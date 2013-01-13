@@ -109,16 +109,33 @@ void Mineserver::Network_Client::read()
 
 void Mineserver::Network_Client::write()
 {
+  bool tempBoo = false;
   for (std::vector<Mineserver::Network_Message::pointer_t>::iterator it=m_outgoing.begin();it!=m_outgoing.end();++it) {
     printf("Trying to send message ID: %02x\n", (*it)->mid);
     m_protocol->compose(m_outgoingBuffer, **it);
+    if((*it)->mid == 0xFC){
+      tempBoo = true;
+    }
   }
 
   m_outgoing.clear();
 
-  if(this->m_encrypted)
+  if(m_encrypted)
   {
-    //for flamer to do :)
+    //std::cout << "Outgoing buffer size is: " << m_outgoingBuffer.size() << std::endl;
+    uint8_t * encrypted;
+    encrypted = new uint8_t[m_outgoingBuffer.size()];
+    int encyptedLength ;
+
+    EVP_EncryptUpdate(&m_encryptionContext, encrypted, &encyptedLength, &m_outgoingBuffer[0], m_outgoingBuffer.size());
+
+    m_outgoingBuffer.clear();
+
+    for(int i = 0; i < encyptedLength; i++){
+      m_outgoingBuffer.push_back(encrypted[i]);
+    }
+    std::cout << "Encypting Data\n";
+    delete[] encrypted;
   }
 
   if(m_outgoingBuffer.size() > 0){
@@ -138,6 +155,11 @@ void Mineserver::Network_Client::write()
         boost::asio::placeholders::bytes_transferred
       )
     );
+  }
+
+  if(tempBoo){
+    //now enable encryption state
+    this->setEncrypted(true);
   }
 }
 
@@ -218,6 +240,8 @@ void Mineserver::Network_Client::startEncryption(uint8_t* symmetricKey)
   EVP_EncryptInit_ex(&m_encryptionContext, EVP_aes_128_cfb8(), NULL, m_symmetricKey, m_symmetricKey);
   EVP_CIPHER_CTX_init(&m_decryptionContext);
   EVP_DecryptInit_ex(&m_decryptionContext, EVP_aes_128_cfb8(), NULL, m_symmetricKey, m_symmetricKey);
+}
 
-  m_encrypted = true;
+void Mineserver::Network_Client::setEncrypted(bool state){
+  m_encrypted = state;
 }

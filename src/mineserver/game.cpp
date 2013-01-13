@@ -164,7 +164,7 @@ void Mineserver::Game::messageWatcherKeepAlive(Mineserver::Game::pointer_t game,
 void Mineserver::Game::messageWatcherHandshake(Mineserver::Game::pointer_t game, Mineserver::Network_Client::pointer_t client, Mineserver::Network_Message::pointer_t message)
 {
   std::cout << "Handshake watcher called!" << std::endl;
-
+  client->setEncrypted(false);
   const Mineserver::Network_Message_Handshake* msg = reinterpret_cast<Mineserver::Network_Message_Handshake*>(&(*message));
   std::cout << msg->username << " is attempting to connect to: " << msg->hostname <<":"<< msg->port << " with protocol version: "<< (int)msg->protocolVersion << std::endl;
 
