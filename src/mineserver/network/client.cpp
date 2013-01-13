@@ -116,26 +116,9 @@ void Mineserver::Network_Client::write()
 
   m_outgoing.clear();
 
-  if(false)
+  if(this->m_encrypted)
   {
-    std::cout << "crypted write() called" << std::endl;
-    std::cout << "Attempting to decrypt incoming data" << std::endl;
-    uint8_t decrypted[m_outgoingBuffer.size()];
-    for(unsigned int i = 0; i < m_outgoingBuffer.size(); i++){
-      decrypted[i] = m_outgoingBuffer[i];
-    }
-    uint8_t* encrypted;
-    int encryptedLength;
-    encrypted = new uint8_t[m_outgoingBuffer.size()];
-
-    EVP_EncryptUpdate(&m_encryptionContext, decrypted, &encryptedLength, (const uint8_t*)encrypted, m_outgoingBuffer.size());
-
-    m_outgoingBuffer.clear();
-    for(int i = 0; i < encryptedLength; i++){
-      m_outgoingBuffer.push_back(encrypted[i]);
-    }
-
-    delete[] encrypted;
+    //for flamer to do :)
   }
 
   if(m_outgoingBuffer.size() > 0){

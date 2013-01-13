@@ -168,6 +168,24 @@ void Mineserver::Game::messageWatcherHandshake(Mineserver::Game::pointer_t game,
   const Mineserver::Network_Message_Handshake* msg = reinterpret_cast<Mineserver::Network_Message_Handshake*>(&(*message));
   std::cout << msg->username << " is attempting to connect to: " << msg->hostname <<":"<< msg->port << " with protocol version: "<< (int)msg->protocolVersion << std::endl;
 
+  Mineserver::Game_Player::pointer_t player;
+  if (m_players.find(msg->username) == m_players.end()) {
+    player = boost::make_shared<Mineserver::Game_Player>();
+    player->setName(msg->username);
+    player->setEid(getNextEid());
+    //player->getPosition().x = world->getSpawnPosition().x;
+    //player->getPosition().y = world->getSpawnPosition().y;
+    //player->getPosition().z = world->getSpawnPosition().z;
+    //player->getPosition().stance = player->getPosition().y + 1.62;
+    //player->getPosition().onGround = true;
+    this->addPlayer(player);
+
+  } else {
+    player = m_players[msg->username];
+  }
+
+  this->associateClient(client, player);
+
   boost::shared_ptr<Mineserver::Network_Message_EncryptionRequest> response = boost::make_shared<Mineserver::Network_Message_EncryptionRequest>();
   response->mid = 0xFD;
   response->serverId = "-"; //need to generate server id for online mode
@@ -215,8 +233,25 @@ void Mineserver::Game::messageWatcherClientStatus(Mineserver::Game::pointer_t ga
   const Mineserver::Network_Message_ClientStatus* msg = reinterpret_cast<Mineserver::Network_Message_ClientStatus*>(&(*message));
   //do everything that the login watcher used to do. player will have to be instantiated in the handshake packet now.
   //todo - send 0x01, (messageWatcherLogin) shouldn't be a watcher anymore because the client doesn't send it.
+  Mineserver::Game_Player::pointer_t player = this->getPlayerForClient(client);
   if(msg->payload == 0x00){
     //ready to login.
+    std::cout << "Player: " << player->getName()
+        << " is ready to login!"
+        << " Entity ID: " << player->getEid() << std::endl;
+
+    boost::shared_ptr<Mineserver::Network_Message_Login> loginMessage = boost::make_shared<Mineserver::Network_Message_Login>();
+    loginMessage->mid = 0x01;
+    loginMessage->entityId = player->getEid();
+    loginMessage->levelType = "default";
+    loginMessage->gameMode = 0; //survival
+    loginMessage->dimension = 0; //over world
+    loginMessage->difficulty = 0; //peaceful... for now :)
+    loginMessage->worldHeight = 0; //not used anymore :-/
+    loginMessage->maxPlayers = 32; //todo - get max players
+
+    client->outgoing().push_back(loginMessage);
+
   }
   else if (msg->payload){
     //ready to be respawn.
@@ -235,7 +270,7 @@ void Mineserver::Game::messageWatcherChat(Mineserver::Game::pointer_t game, Mine
 void Mineserver::Game::messageWatcherLogin(Mineserver::Game::pointer_t game, Mineserver::Network_Client::pointer_t client, Mineserver::Network_Message::pointer_t message)
 {
   std::cout << "Login watcher called!" << std::endl;
-
+  /*
   const Mineserver::Network_Message_Login* msg = reinterpret_cast<Mineserver::Network_Message_Login*>(&(*message));
 
   Mineserver::World::pointer_t world = getWorld(0);
@@ -350,6 +385,7 @@ void Mineserver::Game::messageWatcherLogin(Mineserver::Game::pointer_t game, Min
     chatMessage->message += " joined the game.";
     cclient->outgoing().push_back(chatMessage);
   }
+  */
 }
 
 void Mineserver::Game::messageWatcherPosition(Mineserver::Game::pointer_t game, Mineserver::Network_Client::pointer_t client, Mineserver::Network_Message::pointer_t message)

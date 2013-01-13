@@ -37,13 +37,12 @@ namespace Mineserver
 {
   struct Network_Message_Login : public Mineserver::Network_Message
   {
-    int32_t version;
-    std::string username;
-    int64_t seed;
-    int32_t mode;
-    int8_t dimension;
-    int8_t difficulty;
-    uint8_t worldHeight;
+    int32_t entityId;
+    std::string levelType;
+    uint8_t gameMode;
+    uint8_t dimension;
+    uint8_t difficulty;
+    uint8_t worldHeight; //not used anymore
     uint8_t maxPlayers;
   };
 }
