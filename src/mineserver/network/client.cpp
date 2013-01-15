@@ -122,7 +122,7 @@ void Mineserver::Network_Client::write()
 
   if(m_encrypted)
   {
-    //std::cout << "Outgoing buffer size is: " << m_outgoingBuffer.size() << std::endl;
+    std::cout << "Outgoing buffer size is: " << m_outgoingBuffer.size() << std::endl;
     uint8_t * encrypted;
     encrypted = new uint8_t[m_outgoingBuffer.size()];
     int encyptedLength ;
@@ -134,12 +134,16 @@ void Mineserver::Network_Client::write()
     for(int i = 0; i < encyptedLength; i++){
       m_outgoingBuffer.push_back(encrypted[i]);
     }
+
+    delete[] encrypted;
+
+
     std::cout << "Encypting Data\n";
     delete[] encrypted;
   }
 
   if(m_outgoingBuffer.size() > 0){
-    printf("We want to send %i bytes\n", m_outgoingBuffer.size());
+    printf("We want to send %i bytes\n", (int)m_outgoingBuffer.size());
   }
 
   if (!m_writing)
@@ -161,6 +165,7 @@ void Mineserver::Network_Client::write()
     //now enable encryption state
     this->setEncrypted(true);
   }
+
 }
 
 void Mineserver::Network_Client::handleRead(const boost::system::error_code& e, size_t n)
@@ -221,7 +226,7 @@ void Mineserver::Network_Client::handleWrite(const boost::system::error_code& e,
 {
 	m_outgoingBuffer.erase(m_outgoingBuffer.begin(), m_outgoingBuffer.begin() + n);
 	if(n > 0 && m_outgoingBuffer.size() > 0){
-    printf("Wrote %u bytes, %u left\n", n, m_outgoingBuffer.size());
+    printf("Wrote %u bytes, %u left\n", (int)n, (int)m_outgoingBuffer.size());
 	}
   m_writing = false;
 

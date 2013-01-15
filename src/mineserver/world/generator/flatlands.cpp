@@ -32,7 +32,7 @@ bool Mineserver::World_Generator_Flatlands::processChunk(Mineserver::World_Chunk
 {
   uint8_t blockType;
 
-  for (uint8_t y=0;y<=127;++y) {
+  for (uint8_t y=0;y<=16;++y) {
     switch (y)
     {
       case 0:
@@ -41,13 +41,13 @@ bool Mineserver::World_Generator_Flatlands::processChunk(Mineserver::World_Chunk
       case 1:
         blockType = 0x01; // Stone
         break;
-      case 54:
+      case 10:
         blockType = 0x03; // Dirt
         break;
-      case 59:
+      case 14:
         blockType = 0x02; // Grass
         break;
-      case 60:
+      case 15:
         blockType = 0x00; // Air
         break;
     }

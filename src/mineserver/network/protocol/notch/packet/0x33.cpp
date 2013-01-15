@@ -39,15 +39,17 @@
 
 int Mineserver::Network_Protocol_Notch_Packet_0x33::_read(Mineserver::Network_Protocol_Notch_PacketStream& ps, Mineserver::Network_Message** message)
 {
-  Mineserver::Network_Message_Chunk* msg = new Mineserver::Network_Message_Chunk;
-  *message = msg;
+//  Mineserver::Network_Message_Chunk* msg = new Mineserver::Network_Message_Chunk;
+//  *message = msg;
+//
+//  int16_t bytes;
+//  std::vector<uint8_t> data;
+//
+//  ps >> msg->mid >> msg->posX >> msg->posY >> msg->posZ >> msg->sizeX >> msg->sizeY >> msg->sizeZ >> bytes;
+//  data.reserve(bytes);
+//  ps.bytesTo(reinterpret_cast<uint8_t*>(&(data[0])), bytes);
 
-  int16_t bytes;
-  std::vector<uint8_t> data;
-
-  ps >> msg->mid >> msg->posX >> msg->posY >> msg->posZ >> msg->sizeX >> msg->sizeY >> msg->sizeZ >> bytes;
-  data.reserve(bytes);
-  ps.bytesTo(reinterpret_cast<uint8_t*>(&(data[0])), bytes);
+  std::cout << "Somehow got a chunk off client??\n";
 
   return STATE_GOOD;
 }
@@ -55,21 +57,21 @@ int Mineserver::Network_Protocol_Notch_Packet_0x33::_read(Mineserver::Network_Pr
 int Mineserver::Network_Protocol_Notch_Packet_0x33::_write(Mineserver::Network_Protocol_Notch_PacketStream& ps, const Mineserver::Network_Message& message)
 {
   const Mineserver::Network_Message_Chunk* msg = static_cast<const Mineserver::Network_Message_Chunk*>(&message);
-  
-  uint8_t* chunk = new uint8_t[81920];
-  uint8_t* blockType = chunk;
-	memset(blockType, 0x00, 32768);
-  uint8_t* blockMeta = chunk + 32768;
-	memset(blockMeta, 0x00, 16384);
-  uint8_t* lightBlock = chunk + 49152;
-	memset(lightBlock, 0xFF, 16384);
-  uint8_t* lightSky = chunk + 65536;
-	memset(lightSky, 0xFF, 16384);
 
-  for (int y = 0; y < 128; ++y) {
+  uint8_t* chunk = new uint8_t[10240];
+  uint8_t* blockType = chunk;
+	memset(blockType, 0x00, 4096);
+  uint8_t* blockMeta = chunk + 4096;
+	memset(blockMeta, 0x00, 2048);
+  uint8_t* lightBlock = chunk + 6144;
+	memset(lightBlock, 0xFF, 2048);
+  uint8_t* lightSky = chunk + 8192;
+	memset(lightSky, 0xFF, 2048);
+
+  for (int y = 0; y < 16; ++y) {
     for (int x = 0; x < 16; ++x) {
       for (int z = 0; z < 16; ++z) {
-        blockType[y+(z*128)+(x*128*16)] = msg->chunk->getBlockType(x, y, z);
+        blockType[y+(z*16)+(x*16*16)] = msg->chunk->getBlockType(x, y, z);
 //        blockMeta[y+(z*128)+(x*128*16)] = 0x00; //(msg->chunk->getBlockMeta(x, y, z) << 4) + msg->chunk->getBlockMeta(x+1, y, z);
 //        lightSky[y+(z*128)+(x*128*16)] = 0xFF; //(msg->chunk->getLightSky(x, y, z) << 4) + msg->chunk->getLightSky(x+1, y, z);
 //        lightBlock[y+(z*128)+(x*128*16)] = 0xFF; //(msg->chunk->getLightBlock(x, y, z) << 4) + msg->chunk->getLightBlock(x+1, y, z);
@@ -77,14 +79,14 @@ int Mineserver::Network_Protocol_Notch_Packet_0x33::_write(Mineserver::Network_P
     }
   }
 
-	uLong slen = 81920;
+	uLong slen = 10240;
 	uLongf dlen = compressBound(slen);
 	uint8_t* compressed = new uint8_t[dlen];
 	int result = compress(compressed, &dlen, chunk, slen);
 
   printf("Compressed data is %lu bytes\n", dlen);
 
-  ps << msg->mid << msg->posX << msg->posY << msg->posZ << msg->sizeX << msg->sizeY << msg->sizeZ << static_cast<int32_t>(dlen);
+  ps << msg->mid << msg->posX << msg->posZ << msg->groundUp << msg->primaryBitMap << msg->addBitMap << static_cast<int32_t>(dlen);
   ps.bytesFrom(compressed, dlen);
 
 	delete[] chunk;

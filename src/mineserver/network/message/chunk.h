@@ -39,11 +39,12 @@ namespace Mineserver
   struct Network_Message_Chunk : public Mineserver::Network_Message
   {
     int32_t posX;
-    int16_t posY;
     int32_t posZ;
-    int8_t sizeX;
-    int8_t sizeY;
-    int8_t sizeZ;
+    bool groundUp;
+    uint16_t primaryBitMap;
+    uint16_t addBitMap;
+    int32_t size;
+    uint8_t * data;
     Mineserver::World_Chunk::pointer_t chunk;
   };
 }

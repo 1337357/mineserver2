@@ -62,13 +62,14 @@
 #include <mineserver/game.h>
 #include <mineserver/game/object/slot.h>
 
-bool is_dead(Mineserver::Network_Client::pointer_t client) {
+bool is_dead(Mineserver::Network_Client::pointer_t client)
+{
   return client->alive() == false;
 }
 
 void Mineserver::Game::run()
 {
-  for (clientList_t::iterator client_it=m_clients.begin();client_it!=m_clients.end();++client_it) {
+  for (clientList_t::iterator client_it=m_clients.begin(); client_it!=m_clients.end(); ++client_it) {
     Mineserver::Network_Client::pointer_t client(*client_it);
 
     if (!client) {
@@ -95,8 +96,8 @@ void Mineserver::Game::run()
         std::cout << ", now has " << m_playerMap[player].size() << " clients" << std::endl;
 
         if(m_playerMap[player].size() == 0) { // last client closed the connection
-            m_players.erase(m_clientMap[client]->getName()); // drop player
-            this->leavingPostWatcher(shared_from_this(), player);
+          m_players.erase(m_clientMap[client]->getName()); // drop player
+          this->leavingPostWatcher(shared_from_this(), player);
         }
 
         m_clientMap.erase(client);
@@ -105,35 +106,32 @@ void Mineserver::Game::run()
       continue;
     }
 
-    if (m_lastPlayerListItemUpdate >= playerListItemUpdateInterval)
-    {
+    if (m_lastPlayerListItemUpdate >= playerListItemUpdateInterval) {
       m_lastPlayerListItemUpdate = 0;
-      for (clientList_t::iterator client2_it=m_clients.begin();client2_it!=m_clients.end();++client2_it) {
+      for (clientList_t::iterator client2_it=m_clients.begin(); client2_it!=m_clients.end(); ++client2_it) {
         Mineserver::Network_Client::pointer_t client2(*client2_it);
-          if (m_clientMap.find(client2) != m_clientMap.end()) {
-            Mineserver::Game_Player::pointer_t player(m_clientMap[client2]);
+        if (m_clientMap.find(client2) != m_clientMap.end()) {
+          Mineserver::Game_Player::pointer_t player(m_clientMap[client2]);
 
-            boost::shared_ptr<Mineserver::Network_Message_PlayerListItem> response = boost::make_shared<Mineserver::Network_Message_PlayerListItem>();
-            response->mid = 0xC9;
-            response->name = player->getName();
-            response->online = true;
-            response->ping = 0; // TODO: Calculate a player's ping
-            client->outgoing().push_back(response);
+          boost::shared_ptr<Mineserver::Network_Message_PlayerListItem> response = boost::make_shared<Mineserver::Network_Message_PlayerListItem>();
+          response->mid = 0xC9;
+          response->name = player->getName();
+          response->online = true;
+          response->ping = 0; // TODO: Calculate a player's ping
+          client->outgoing().push_back(response);
 
-          }
+        }
       }
-    }
-    else
-    {
+    } else {
       m_lastPlayerListItemUpdate++;
     }
 
     size_t incoming = client->incoming().size();
-    if(incoming > 0){
+    if(incoming > 0) {
       std::cout << "There are " << client->incoming().size() << " messages." << std::endl;
     }
 
-    for (std::vector<Mineserver::Network_Message::pointer_t>::iterator message_it=client->incoming().begin();message_it!=client->incoming().end();++message_it) {
+    for (std::vector<Mineserver::Network_Message::pointer_t>::iterator message_it=client->incoming().begin(); message_it!=client->incoming().end(); ++message_it) {
       Mineserver::Network_Message::pointer_t message = *message_it;
       m_messageWatchers[message->mid](shared_from_this(), client, message);
     }
@@ -148,7 +146,7 @@ void Mineserver::Game::run()
 
   m_clients.erase(remove_if(m_clients.begin(), m_clients.end(), is_dead), m_clients.end());
 
-  for (playerList_t::iterator player_it=m_players.begin();player_it!=m_players.end();++player_it) {
+  for (playerList_t::iterator player_it=m_players.begin(); player_it!=m_players.end(); ++player_it) {
     Mineserver::Game_Player::pointer_t player(player_it->second);
     player->run();
   }
@@ -203,7 +201,7 @@ void Mineserver::Game::messageWatcherEncryptionResponse(Mineserver::Game::pointe
   const Mineserver::Network_Message_EncryptionResponse* msg = reinterpret_cast<Mineserver::Network_Message_EncryptionResponse*>(&(*message));
 
   /* Verify the encryption bytes to see if they match */
-  if(authentication->verifyEncryptionBytes(msg->verifyTokenLength, msg->verifyToken)){
+  if(authentication->verifyEncryptionBytes(msg->verifyTokenLength, msg->verifyToken)) {
     std::cout << "Client verify token is correct" << std::endl;
     //Now would be the time to verify the client with session.minecraft.net
     //yeaah, nah...
@@ -218,8 +216,7 @@ void Mineserver::Game::messageWatcherEncryptionResponse(Mineserver::Game::pointe
     uint8_t* symmetric = authentication->decryptSymmetricKey(msg->sharedSecretLength, msg->sharedSecret);
 
     client->startEncryption(symmetric);
-  }
-  else {
+  } else {
     boost::shared_ptr<Mineserver::Network_Message_Kick> response = boost::make_shared<Mineserver::Network_Message_Kick>();
     response->mid = 0xFF;
     response->reason = "Encrypted verify token mismatch";
@@ -234,11 +231,11 @@ void Mineserver::Game::messageWatcherClientStatus(Mineserver::Game::pointer_t ga
   //do everything that the login watcher used to do. player will have to be instantiated in the handshake packet now.
   //todo - send 0x01, (messageWatcherLogin) shouldn't be a watcher anymore because the client doesn't send it.
   Mineserver::Game_Player::pointer_t player = this->getPlayerForClient(client);
-  if(msg->payload == 0x00){
+  if(msg->payload == 0x00) {
     //ready to login.
     std::cout << "Player: " << player->getName()
-        << " is ready to login!"
-        << " Entity ID: " << player->getEid() << std::endl;
+              << " is ready to login!"
+              << " Entity ID: " << player->getEid() << std::endl;
 
     boost::shared_ptr<Mineserver::Network_Message_Login> loginMessage = boost::make_shared<Mineserver::Network_Message_Login>();
     loginMessage->mid = 0x01;
@@ -252,8 +249,87 @@ void Mineserver::Game::messageWatcherClientStatus(Mineserver::Game::pointer_t ga
 
     client->outgoing().push_back(loginMessage);
 
-  }
-  else if (msg->payload){
+
+    Mineserver::World::pointer_t world = getWorld(0);
+
+
+    for (int x = -5; x <= 5; ++x) {
+      for (int z = -5; z <= 5; ++z) {
+        boost::shared_ptr<Mineserver::Network_Message_Chunk> chunkMessage = boost::make_shared<Mineserver::Network_Message_Chunk>();
+        chunkMessage->mid = 0x33;
+        chunkMessage->posX = x;
+        chunkMessage->posZ = z;
+        chunkMessage->groundUp = true;
+        chunkMessage->primaryBitMap = 0x0001;
+        chunkMessage->addBitMap = 0x0000;
+        chunkMessage->chunk = world->generateChunk(x, z);
+        client->outgoing().push_back(chunkMessage);
+      }
+    }
+
+    boost::shared_ptr<Mineserver::Network_Message_SpawnPosition> spawnPositionMessage = boost::make_shared<Mineserver::Network_Message_SpawnPosition>();
+    spawnPositionMessage->mid = 0x06;
+    spawnPositionMessage->x = world->getSpawnPosition().x;
+    spawnPositionMessage->y = world->getSpawnPosition().y;
+    spawnPositionMessage->z = world->getSpawnPosition().z;
+    client->outgoing().push_back(spawnPositionMessage);
+
+    boost::shared_ptr<Mineserver::Network_Message_WindowItems> windowItemsMessage = boost::make_shared<Mineserver::Network_Message_WindowItems>();
+    windowItemsMessage->mid = 0x68;
+    windowItemsMessage->windowId = 0;
+    windowItemsMessage->count = 44;
+    windowItemsMessage->slots.resize(windowItemsMessage->count);
+    //for (Network_Message_WindowItems::slotList_t::iterator it = windowItemsMessage->slots.begin(); it != windowItemsMessage->slots.end(); ++it) {
+    //  (*it) = Game_Object_Slot(-1, 0, 0);
+    //}
+    //windowItemsMessage->slots[36].setItemId(278); windowItemsMessage->slots[36].setCount(1); windowItemsMessage->slots[36].setEnchantable(true);
+    //windowItemsMessage->slots[37].setItemId(277); windowItemsMessage->slots[37].setCount(1); windowItemsMessage->slots[36].setEnchantable(true);
+    //windowItemsMessage->slots[38].setItemId(279); windowItemsMessage->slots[38].setCount(1); windowItemsMessage->slots[36].setEnchantable(true);
+    windowItemsMessage->slots[39].setItemId(1);
+    windowItemsMessage->slots[39].setCount(64);
+    windowItemsMessage->slots[40].setItemId(3);
+    windowItemsMessage->slots[40].setCount(64);
+    windowItemsMessage->slots[41].setItemId(5);
+    windowItemsMessage->slots[41].setCount(64);
+    windowItemsMessage->slots[42].setItemId(58);
+    windowItemsMessage->slots[42].setCount(64);
+    windowItemsMessage->slots[43].setItemId(54);
+    windowItemsMessage->slots[43].setCount(64);
+    windowItemsMessage->slots[44].setItemId(102);
+    windowItemsMessage->slots[44].setCount(64);
+    client->outgoing().push_back(windowItemsMessage);
+
+    std::cout << "Spawning player at " << player->getPosition().x << "," << player->getPosition().y << "," << player->getPosition().z << std::endl;
+
+    boost::shared_ptr<Mineserver::Network_Message_PositionAndOrientation> positionAndOrientationMessage = boost::make_shared<Mineserver::Network_Message_PositionAndOrientation>();
+    positionAndOrientationMessage->mid = 0x0D;
+    positionAndOrientationMessage->x = player->getPosition().x;
+    positionAndOrientationMessage->y = player->getPosition().y;
+    positionAndOrientationMessage->z = player->getPosition().z;
+    positionAndOrientationMessage->stance = player->getPosition().stance;
+    positionAndOrientationMessage->yaw = player->getPosition().yaw;
+    positionAndOrientationMessage->pitch = player->getPosition().pitch;
+    positionAndOrientationMessage->onGround = player->getPosition().onGround;
+    client->outgoing().push_back(positionAndOrientationMessage);
+
+    for(clientList_t::iterator it = m_clients.begin(); it != m_clients.end(); ++it) {
+      Mineserver::Network_Client::pointer_t cclient = *it;
+      boost::shared_ptr<Mineserver::Network_Message_PlayerListItem> playerListItemMessage = boost::make_shared<Mineserver::Network_Message_PlayerListItem>();
+      playerListItemMessage->mid = 0xC9;
+      playerListItemMessage->name = player->getName();
+      playerListItemMessage->online = true;
+      playerListItemMessage->ping = -1; // Note: this player shouldn't have a ping yet, so we should leave this -1
+      cclient->outgoing().push_back(playerListItemMessage);
+//      boost::shared_ptr<Mineserver::Network_Message_Chat> chatMessage = boost::make_shared<Mineserver::Network_Message_Chat>();
+//      chatMessage->mid = 0x03;
+//      chatMessage->message += msg->username;
+//      chatMessage->message += " joined the game.";
+//      cclient->outgoing().push_back(chatMessage);
+    }
+
+
+
+  } else if (msg->payload) {
     //ready to be respawn.
   }
 }
@@ -432,14 +508,18 @@ void Mineserver::Game::messageWatcherDigging(Mineserver::Game::pointer_t game, M
   std::cout << "Digging watcher called!" << std::endl;
 
   const Mineserver::Network_Message_Digging* msg = reinterpret_cast<Mineserver::Network_Message_Digging*>(&(*message));
-  if (!clientIsAssociated(client)) { return; }
+  if (!clientIsAssociated(client)) {
+    return;
+  }
 
   // status 0x00: start digging
   // status 0x02: finish digging
   // status 0x04: drop item
   // status 0x05: shoot arrow
 
-  if (msg->status != 0 && msg->status != 2) { return; }
+  if (msg->status != 0 && msg->status != 2) {
+    return;
+  }
 
   Mineserver::World::pointer_t world = getWorld(0);
 
@@ -447,20 +527,16 @@ void Mineserver::Game::messageWatcherDigging(Mineserver::Game::pointer_t game, M
   chunk_x = ((msg->x) >> 4);
   chunk_z = ((msg->z) >> 4);
 
-  if (!world->hasChunk(chunk_x, chunk_z))
-  {
+  if (!world->hasChunk(chunk_x, chunk_z)) {
     std::cout << "Chunk " << chunk_x << "," << chunk_z << " not found!" << std::endl;
-  }
-  else
-  {
+  } else {
     Mineserver::World_Chunk::pointer_t chunk = world->getChunk(chunk_x, chunk_z);
     Mineserver::World_ChunkPosition cPosition = Mineserver::World_ChunkPosition(msg->x & 15, msg->y, msg->z & 15);
     Mineserver::WorldBlockPosition wPosition = Mineserver::WorldBlockPosition(msg->x, msg->y, msg->z);
 
     uint8_t type = chunk->getBlockType(cPosition.x, cPosition.y, cPosition.z);
 
-    if (type != 0x07) // if type is not bedrock
-    {
+    if (type != 0x07) { // if type is not bedrock
       chunk->setBlockType(cPosition.x, cPosition.y, cPosition.z, 0);
       chunk->setBlockMeta(cPosition.x, cPosition.y, cPosition.z, 0);
 
@@ -476,7 +552,9 @@ void Mineserver::Game::messageWatcherBlockPlacement(Mineserver::Game::pointer_t 
   const Mineserver::Network_Message_BlockPlacement* msg = reinterpret_cast<Mineserver::Network_Message_BlockPlacement*>(&(*message));
   std::cout << "BlockPlacement watcher called! " << "Item id " << int(msg->itemId);
 
-  if (!clientIsAssociated(client)) { return; }
+  if (!clientIsAssociated(client)) {
+    return;
+  }
 
   Mineserver::World::pointer_t world = game->getWorld(0);
 
@@ -484,46 +562,42 @@ void Mineserver::Game::messageWatcherBlockPlacement(Mineserver::Game::pointer_t 
   int32_t translatedY = msg->y;
   int32_t translatedZ = msg->z;
 
-  switch (msg->direction)
-  {
-    case -1:
-      // Block interaction, not placement
-      break;
-    case 0:
-      translatedY--;
-      break;
-    case 1:
-      translatedY++;
-      break;
-    case 2:
-      translatedZ--;
-      break;
-    case 3:
-      translatedZ++;
-      break;
-    case 4:
-      translatedX--;
-      break;
-    case 5:
-      translatedX++;
-      break;
+  switch (msg->direction) {
+  case -1:
+    // Block interaction, not placement
+    break;
+  case 0:
+    translatedY--;
+    break;
+  case 1:
+    translatedY++;
+    break;
+  case 2:
+    translatedZ--;
+    break;
+  case 3:
+    translatedZ++;
+    break;
+  case 4:
+    translatedX--;
+    break;
+  case 5:
+    translatedX++;
+    break;
   }
 
   std::cout << " at {" << int(msg->x) << "," << int(msg->y) << "," << int(msg->z) <<
-               "} direction " << int(msg->direction) << " -> translated to {" <<
-               int(translatedX) << "," << int(translatedY) << "," << int(translatedZ) <<
-               "}" << std::endl;
+            "} direction " << int(msg->direction) << " -> translated to {" <<
+            int(translatedX) << "," << int(translatedY) << "," << int(translatedZ) <<
+            "}" << std::endl;
 
   int chunk_x, chunk_z;
   chunk_x = ((translatedX) >> 4);
   chunk_z = ((translatedZ) >> 4);
 
-  if (!world->hasChunk(chunk_x, chunk_z))
-  {
+  if (!world->hasChunk(chunk_x, chunk_z)) {
     std::cout << "Chunk " << chunk_x << "," << chunk_z << " not found!" << std::endl;
-  }
-  else
-  {
+  } else {
     Mineserver::World_Chunk::pointer_t chunk = world->getChunk(chunk_x, chunk_z);
     Mineserver::World_ChunkPosition cPosition = Mineserver::World_ChunkPosition(translatedX & 15, translatedY, translatedZ & 15);
     Mineserver::WorldBlockPosition wPosition = Mineserver::WorldBlockPosition(translatedX, translatedY, translatedZ);
@@ -531,27 +605,19 @@ void Mineserver::Game::messageWatcherBlockPlacement(Mineserver::Game::pointer_t 
     uint8_t itemId = chunk->getBlockType(cPosition.x, cPosition.y, cPosition.z);
     uint8_t itemMeta = chunk->getBlockMeta(cPosition.x, cPosition.y, cPosition.z);
 
-    if (msg->y != -1 && msg->direction != -1 && msg->itemId != -1)
-    {
+    if (msg->y != -1 && msg->direction != -1 && msg->itemId != -1) {
       // TODO: We will check if there's air here or not, but later we need to move this into blockPlacePreWatcher
-      if (itemId == 0)
-      {
+      if (itemId == 0) {
         chunk->setBlockType(cPosition.x, cPosition.y, cPosition.z, msg->itemId);
         chunk->setBlockMeta(cPosition.x, cPosition.y, cPosition.z, msg->damage);
 
         blockPlacePostWatcher(shared_from_this(), getPlayerForClient(client), world, wPosition, chunk, cPosition, msg->itemId, msg->damage);
-      }
-      else
-      {
+      } else {
         std::cout << "Player tried to place a block where one already exists." << std::endl;
       }
-    }
-    else if (msg->x == -1 && msg->y == -1 && msg->z == -1 && msg->direction == -1)
-    {
+    } else if (msg->x == -1 && msg->y == -1 && msg->z == -1 && msg->direction == -1) {
       // TODO: Do pre/post block interaction
-    }
-    else
-    {
+    } else {
       std::cout << "BlockPlacement watcher is doing something funny." << std::endl;
     }
 
@@ -569,12 +635,9 @@ void Mineserver::Game::messageWatcherBlockChange(Mineserver::Game::pointer_t gam
   chunk_x = ((msg->x) >> 4);
   chunk_z = ((msg->z) >> 4);
 
-  if (!world->hasChunk(chunk_x, chunk_z))
-  {
+  if (!world->hasChunk(chunk_x, chunk_z)) {
     std::cout << "Chunk " << chunk_x << "," << chunk_z << " not found!" << std::endl;
-  }
-  else
-  {
+  } else {
     Mineserver::World_Chunk::pointer_t chunk = world->getChunk(chunk_x, chunk_z);
     Mineserver::World_ChunkPosition cPosition = Mineserver::World_ChunkPosition(msg->x & 15, msg->y, msg->z & 15);
     Mineserver::WorldBlockPosition wPosition = Mineserver::WorldBlockPosition(msg->x, msg->y, msg->z);
@@ -625,8 +688,7 @@ bool Mineserver::Game::movementPostWatcher(Mineserver::Game::pointer_t game, Min
   double dX = (position.x - oldPos.x);
   double dY = (position.y - oldPos.y);
   double dZ = (position.z - oldPos.z);
-  if( dX > 4 || dX < -4 || dY > 4 || dY < -4 || dZ > 4 || dZ < -4 )
-  {
+  if( dX > 4 || dX < -4 || dY > 4 || dY < -4 || dZ > 4 || dZ < -4 ) {
     // Entity Teleport
     boost::shared_ptr<Mineserver::Network_Message_EntityTeleport> tmp = boost::make_shared<Mineserver::Network_Message_EntityTeleport>();
     tmp->mid = 0x22;
@@ -637,10 +699,8 @@ bool Mineserver::Game::movementPostWatcher(Mineserver::Game::pointer_t game, Min
     tmp->pitch  = (int8_t)(position.pitch / 360 * 256);
     tmp->yaw    = (int8_t)(position.yaw / 360 * 256);
     player_move = tmp;
-  }
-  else if ((oldPos.yaw != position.yaw || oldPos.pitch != position.pitch)
-        && (oldPos.x == position.x && oldPos.y == position.y && oldPos.z == position.z))
-  {
+  } else if ((oldPos.yaw != position.yaw || oldPos.pitch != position.pitch)
+             && (oldPos.x == position.x && oldPos.y == position.y && oldPos.z == position.z)) {
     // Entity Look
     boost::shared_ptr<Mineserver::Network_Message_EntityLook> tmp = boost::make_shared<Mineserver::Network_Message_EntityLook>();
     tmp->mid = 0x20;
@@ -648,10 +708,8 @@ bool Mineserver::Game::movementPostWatcher(Mineserver::Game::pointer_t game, Min
     tmp->yaw    = (int8_t)(position.yaw / 360 * 256);
     tmp->pitch  = (int8_t)(position.pitch / 360 * 256);
     player_move = tmp;
-  }
-  else if ((oldPos.yaw == position.yaw && oldPos.pitch == position.pitch)
-        && (oldPos.x != position.x || oldPos.y != position.y || oldPos.z != position.z))
-  {
+  } else if ((oldPos.yaw == position.yaw && oldPos.pitch == position.pitch)
+             && (oldPos.x != position.x || oldPos.y != position.y || oldPos.z != position.z)) {
     // Entity Relative Move
     boost::shared_ptr<Mineserver::Network_Message_EntityRelativeMove> tmp = boost::make_shared<Mineserver::Network_Message_EntityRelativeMove>();
     tmp->mid = 0x1F;
@@ -660,9 +718,7 @@ bool Mineserver::Game::movementPostWatcher(Mineserver::Game::pointer_t game, Min
     tmp->y      = (int8_t)(dY * 32);
     tmp->z      = (int8_t)(dZ * 32);
     player_move = tmp;
-  }
-  else
-  {
+  } else {
     // Entity Relative Move & Look
     boost::shared_ptr<Mineserver::Network_Message_EntityRelativeMoveAndLook> tmp = boost::make_shared<Mineserver::Network_Message_EntityRelativeMoveAndLook>();
     tmp->mid = 0x21;
@@ -686,9 +742,11 @@ bool Mineserver::Game::movementPostWatcher(Mineserver::Game::pointer_t game, Min
   clientList_t other_clients;
   clientList_t my_clients = getClientsForPlayer(player);
 
-  for (playerList_t::iterator player_it=m_players.begin();player_it!=m_players.end();++player_it) {
+  for (playerList_t::iterator player_it=m_players.begin(); player_it!=m_players.end(); ++player_it) {
     Mineserver::Game_Player::pointer_t other(player_it->second);
-    if(other == player) { continue; }
+    if(other == player) {
+      continue;
+    }
     other_clients = getClientsForPlayer(other);
 
     // calc new distance
@@ -703,7 +761,7 @@ bool Mineserver::Game::movementPostWatcher(Mineserver::Game::pointer_t game, Min
         boost::shared_ptr<Mineserver::Network_Message_DestroyEntity> destroyEntity = boost::make_shared<Mineserver::Network_Message_DestroyEntity>();
         destroyEntity->mid = 0x1D;
         destroyEntity->entityId = player->getEid();
-        for(clientList_t::iterator it=other_clients.begin();it != other_clients.end(); it++) {
+        for(clientList_t::iterator it=other_clients.begin(); it != other_clients.end(); it++) {
           std::cout << " [" << other->getEid() << "] << destroy entity #" << player->getEid() << std::endl;
           (*it)->outgoing().push_back(destroyEntity);
         }
@@ -711,7 +769,7 @@ bool Mineserver::Game::movementPostWatcher(Mineserver::Game::pointer_t game, Min
         destroyEntity = boost::make_shared<Mineserver::Network_Message_DestroyEntity>();
         destroyEntity->mid = 0x1D;
         destroyEntity->entityId = other->getEid();
-        for(clientList_t::iterator it=my_clients.begin();it!=my_clients.end();it++) {
+        for(clientList_t::iterator it=my_clients.begin(); it!=my_clients.end(); it++) {
           std::cout << " [" << player->getEid() << "] << destroy entity #" << other->getEid() << std::endl;
           (*it)->outgoing().push_back(destroyEntity);
         }
@@ -719,8 +777,8 @@ bool Mineserver::Game::movementPostWatcher(Mineserver::Game::pointer_t game, Min
         others.erase(other->getEid());
       } else { // still range
         // update entity position => send
-        for(clientList_t::iterator it=other_clients.begin();it != other_clients.end(); it++) {
-            (*it)->outgoing().push_back(player_move);
+        for(clientList_t::iterator it=other_clients.begin(); it != other_clients.end(); it++) {
+          (*it)->outgoing().push_back(player_move);
         }
       }
     } else { // player is NOT in range of this one
@@ -735,7 +793,7 @@ bool Mineserver::Game::movementPostWatcher(Mineserver::Game::pointer_t game, Min
         spawnEntity->rotation = (int8_t)(oldPos.yaw / 360 * 256);
         spawnEntity->pitch    = (int8_t)(oldPos.pitch / 360 * 256);
         spawnEntity->currentItem = 0;
-        for(clientList_t::iterator it=other_clients.begin();it != other_clients.end(); it++) {
+        for(clientList_t::iterator it=other_clients.begin(); it != other_clients.end(); it++) {
           std::cout << " [" << other->getEid() << "] << spawn entity #" << player->getEid() << std::endl;
           (*it)->outgoing().push_back(spawnEntity);
         }
@@ -749,7 +807,7 @@ bool Mineserver::Game::movementPostWatcher(Mineserver::Game::pointer_t game, Min
         spawnEntity->rotation = (int8_t)(other->getPosition().yaw / 360 * 256);
         spawnEntity->pitch    = (int8_t)(other->getPosition().pitch / 360 * 256);
         spawnEntity->currentItem = 0;
-        for(clientList_t::iterator it=my_clients.begin();it != my_clients.end(); it++) {
+        for(clientList_t::iterator it=my_clients.begin(); it != my_clients.end(); it++) {
           std::cout << " [" << player->getEid() << "] << spawn entity #" << other->getEid() << std::endl;
           (*it)->outgoing().push_back(spawnEntity);
         }
@@ -805,8 +863,7 @@ void Mineserver::Game::leavingPostWatcher(Mineserver::Game::pointer_t game, Mine
 {
   std::cout << "leavingPostWatcher called! Player: " << player->getName() << std::endl;
 
-  for(clientList_t::iterator it = m_clients.begin(); it != m_clients.end(); ++it)
-  {
+  for(clientList_t::iterator it = m_clients.begin(); it != m_clients.end(); ++it) {
     Mineserver::Network_Client::pointer_t cclient = *it;
     boost::shared_ptr<Mineserver::Network_Message_PlayerListItem> playerListItemMessage = boost::make_shared<Mineserver::Network_Message_PlayerListItem>();
     playerListItemMessage->mid = 0xC9;
@@ -823,13 +880,13 @@ void Mineserver::Game::leavingPostWatcher(Mineserver::Game::pointer_t game, Mine
   }
 
   clientList_t other_clients;
-  for(playerList_t::iterator player_it=m_players.begin();player_it!=m_players.end();++player_it) {
+  for(playerList_t::iterator player_it=m_players.begin(); player_it!=m_players.end(); ++player_it) {
     Mineserver::Game_Player::pointer_t other(player_it->second);
     if(other == player) {
-        continue;
+      continue;
     }
     if(m_playerInRange[player].count(other->getEid()) < 1) {  // we are not in range of this one
-        continue;
+      continue;
     }
 
     // send destroy entity
@@ -837,9 +894,9 @@ void Mineserver::Game::leavingPostWatcher(Mineserver::Game::pointer_t game, Mine
     destroyEntity->mid = 0x1D;
     destroyEntity->entityId = player->getEid();
     other_clients = getClientsForPlayer(other);
-    for(clientList_t::iterator it=other_clients.begin();it != other_clients.end(); it++) {
-        std::cout << " [" << other->getEid() << "] << destroy entity #" <<  player->getEid() << std::endl;
-        (*it)->outgoing().push_back(destroyEntity);
+    for(clientList_t::iterator it=other_clients.begin(); it != other_clients.end(); it++) {
+      std::cout << " [" << other->getEid() << "] << destroy entity #" <<  player->getEid() << std::endl;
+      (*it)->outgoing().push_back(destroyEntity);
     }
   }
 }
