@@ -80,11 +80,12 @@ void Mineserver::Network_Client::timedOut()
   responseMessage->reason = "Timed-out";
   outgoing().push_back(responseMessage);
   stop();
-  // Jailout2000: Does the kick message get sent before closing the socket? I guess it doesn't *really* matter...
 }
 
 void Mineserver::Network_Client::start()
 {
+  std::cout << "Client connection starting" << std::endl;
+  m_encryptionPending = false; //this will be set to true when about to send 0xFC response.
   read();
 }
 
@@ -94,6 +95,13 @@ void Mineserver::Network_Client::stop()
   m_alive = false;
 }
 
+/**
+ * Reads incoming bytes which get stored to m_tmp.
+ *
+ * calls handleRead() callback function which will
+ * decrypt bytes if needed before parsing them into
+ * network messages.
+ */
 void Mineserver::Network_Client::read()
 {
   m_socket.async_read_some(
@@ -106,48 +114,53 @@ void Mineserver::Network_Client::read()
     )
   );
 }
-
+/**
+ * Transmit the messages to the client.
+ *
+ * the m_outgoing message objects are composed into the bytes in the correct
+ * format for the client and are subsequently added to the m_outgoingBuffer.
+ *
+ * If encryption is enabled, EVP_EncryptUpdate will replace the bytes in the
+ * m_outgoingBuffer with the AES256 ones.
+ *
+ * The m_outgoingBuffer will then be sent asynchronously, calling the handleWrite()
+ * function with the bytes transfered once complete, or any errors that occured.
+ */
 void Mineserver::Network_Client::write()
 {
-  bool tempBoo = false;
   for (std::vector<Mineserver::Network_Message::pointer_t>::iterator it=m_outgoing.begin();it!=m_outgoing.end();++it) {
     printf("Trying to send message ID: %02x\n", (*it)->mid);
+    //testing code
+    std::cout << "The size of the m_outgoingBuffer in the compose iterator is: " << m_outgoingBuffer.size() << std::endl;
+    //end testing code
     m_protocol->compose(m_outgoingBuffer, **it);
-    if((*it)->mid == 0xFC){
-      tempBoo = true;
+    //if its the acknowledging 0xFC, set the encryption in the write callback (handleWrite)
+    if( (*it)->mid == 0xFC ){
+      m_encryptionPending = true;
     }
   }
 
+  //clear the 'messages' objects list now that they have been composed into bytes the client understands.
   m_outgoing.clear();
 
+  //overwrite the values in the buffer with the AES encrypted equalivant.
   if(m_encrypted)
   {
-    std::cout << "Outgoing buffer size is: " << m_outgoingBuffer.size() << std::endl;
-    uint8_t * encrypted;
-    encrypted = new uint8_t[m_outgoingBuffer.size()];
-    int encyptedLength ;
+    std::cout << "About to encrypt the outgoing data. Byte count: " << m_outgoingBuffer.size() << std::endl;
+    int encyptedLength;
 
-    EVP_EncryptUpdate(&m_encryptionContext, encrypted, &encyptedLength, &m_outgoingBuffer[0], m_outgoingBuffer.size());
-
-    m_outgoingBuffer.clear();
-
-    for(int i = 0; i < encyptedLength; i++){
-      m_outgoingBuffer.push_back(encrypted[i]);
+    if(!EVP_EncryptUpdate(&m_encryptionContext, &m_outgoingBuffer[0], &encyptedLength, &m_outgoingBuffer[0], m_outgoingBuffer.size())){
+      std::cout << "There was an ERROR encrypting the bytes" << std::endl;
+      ERR_print_errors_fp(stdout);
     }
 
-    delete[] encrypted;
+  }//end if IF m_encrypted
 
-
-    std::cout << "Encypting Data\n";
-    delete[] encrypted;
-  }
-
-  if(m_outgoingBuffer.size() > 0){
-    printf("We want to send %i bytes\n", (int)m_outgoingBuffer.size());
-  }
+  std::cout << "We want to send " << m_outgoingBuffer.size() << " bytes." << std::endl;
 
   if (!m_writing)
   {
+    std::cout << "About to call async write with: " << m_outgoingBuffer.size() << " bytes in the buffer that should be encrypted now." << std::endl;
     m_writing = true;
 
     m_socket.async_write_some(
@@ -159,11 +172,6 @@ void Mineserver::Network_Client::write()
         boost::asio::placeholders::bytes_transferred
       )
     );
-  }
-
-  if(tempBoo){
-    //now enable encryption state
-    this->setEncrypted(true);
   }
 
 }
@@ -178,7 +186,10 @@ void Mineserver::Network_Client::handleRead(const boost::system::error_code& e, 
       int decryptedLength;
       decrypted = new uint8_t[n];
 
-      EVP_DecryptUpdate(&m_decryptionContext, decrypted, &decryptedLength, (const uint8_t*)encrypted, n);
+      if(EVP_DecryptUpdate(&m_decryptionContext, decrypted, &decryptedLength, (const uint8_t*)encrypted, n)){
+        std::cout << "There was an error decrypting the bytes" << std::endl;
+        ERR_print_errors_fp(stdout);
+      }
 
       m_incomingBuffer.insert(m_incomingBuffer.end(), decrypted, decrypted + n);
 
@@ -192,8 +203,9 @@ void Mineserver::Network_Client::handleRead(const boost::system::error_code& e, 
       delete[] decrypted;
     }
 
-    else {
-      //not encrypted yet, just read the message as usual
+    else
+    {
+      //we're not encrypted yet, just read the message as usual
       m_incomingBuffer.insert(m_incomingBuffer.end(), m_tmp.begin(), m_tmp.begin() + n);
       printf("Got bytes: ");
       for (boost::array<uint8_t, 8192>::iterator it=m_tmp.begin();it!=m_tmp.begin()+n;++it) {
@@ -222,21 +234,33 @@ void Mineserver::Network_Client::handleRead(const boost::system::error_code& e, 
   }
 }
 
+/**
+ * The boost write() call-back. Called once the outgoing bytes have been sent sent.
+ * n is the amount of bytes that were actually sent down the tubes.
+ */
 void Mineserver::Network_Client::handleWrite(const boost::system::error_code& e, size_t n)
 {
+  std::cout << "handleWrite called with n: " << n << std::endl;
 	m_outgoingBuffer.erase(m_outgoingBuffer.begin(), m_outgoingBuffer.begin() + n);
-	if(n > 0 && m_outgoingBuffer.size() > 0){
-    printf("Wrote %u bytes, %u left\n", (int)n, (int)m_outgoingBuffer.size());
-	}
+	std::cout << "Wrote " << n << " bytes, " << m_outgoingBuffer.size() << " left." << std::endl;
   m_writing = false;
+
+  //did we just send the 0xFC packet? (last plaintext one). Then start encryption.
+  if(m_encryptionPending){
+    m_encrypted = true; //bytes will be en/decrypted in write() and handleRead()
+    m_encryptionPending = false; // to stop run this condition running again and again.
+    std::cout << "Encryption has started" << std::endl;
+  }
 
   if (m_outgoingBuffer.size() > 0) {
     write();
   }
 }
+
 /**
- * Takes the RSA decrypted symmetric key, stores it and starts encrypted
- * stream traffic.
+ * Takes the RSA decrypted symmetric key, stores it and initializes
+ * the encryption and decryption contexts.
+ *
  */
 void Mineserver::Network_Client::startEncryption(uint8_t* symmetricKey)
 {
@@ -247,6 +271,10 @@ void Mineserver::Network_Client::startEncryption(uint8_t* symmetricKey)
   EVP_DecryptInit_ex(&m_decryptionContext, EVP_aes_128_cfb8(), NULL, m_symmetricKey, m_symmetricKey);
 }
 
+/**
+ * Sets the state of the clients network tx/rx to be AES encrypted or not.
+ * @deprectated - not being used.
+ */
 void Mineserver::Network_Client::setEncrypted(bool state){
   m_encrypted = state;
 }

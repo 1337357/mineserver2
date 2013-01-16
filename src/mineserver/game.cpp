@@ -297,7 +297,7 @@ void Mineserver::Game::messageWatcherClientStatus(Mineserver::Game::pointer_t ga
     windowItemsMessage->slots[43].setCount(64);
     windowItemsMessage->slots[44].setItemId(102);
     windowItemsMessage->slots[44].setCount(64);
-    client->outgoing().push_back(windowItemsMessage);
+    //todo - this packet IS out of date. client->outgoing().push_back(windowItemsMessage);
 
     std::cout << "Spawning player at " << player->getPosition().x << "," << player->getPosition().y << "," << player->getPosition().z << std::endl;
 
@@ -326,7 +326,6 @@ void Mineserver::Game::messageWatcherClientStatus(Mineserver::Game::pointer_t ga
 //      chatMessage->message += " joined the game.";
 //      cclient->outgoing().push_back(chatMessage);
     }
-
 
 
   } else if (msg->payload) {

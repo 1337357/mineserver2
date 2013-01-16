@@ -70,6 +70,7 @@ namespace Mineserver
     uint8_t* m_symmetricKey;
     EVP_CIPHER_CTX m_encryptionContext;
     EVP_CIPHER_CTX m_decryptionContext;
+    bool m_encryptionPending;
     bool m_encrypted;
 
   public:

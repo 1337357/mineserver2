@@ -26,6 +26,7 @@
 */
 
 #include <vector>
+#include <iostream>
 #include <cstdio>
 #include <cstring>
 #include <zlib.h>
