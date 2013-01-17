@@ -26,6 +26,7 @@
  */
 
 #include <string>
+#include <vector>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -49,16 +50,12 @@ namespace Mineserver {
     EVP_PKEY* m_privateKey;
     uint8_t* m_publicKey;
     uint16_t m_publicKeyLength;
-    uint16_t m_encryptionBytesLength;
-    uint8_t* m_encryptionBytes;
-
 
     /**
      * Generates the server id which is sent to the client
      * for minecraft.net session validation.
      */
     void generateId();
-    void generateEncryptionBytes(short length);
 
   public:
     typedef boost::shared_ptr<Mineserver::Network_Authenticator> pointer_t;
@@ -68,12 +65,10 @@ namespace Mineserver {
 
     uint8_t* getPublicKey();
     int16_t getPublicKeyLength();
-    uint8_t* getEncryptionBytes();
-    uint16_t getEncryptionBytesLength();
 
     int decryptMessage(std::string* message);
     int encryptMessage(std::string* message);
-    bool verifyEncryptionBytes(short length, const uint8_t*);
+    bool verifyEncryptionBytes(short encryptedLength, const uint8_t* encryptedBytes, std::vector<uint8_t> token);
     uint8_t* decryptSymmetricKey(short length, uint8_t* encryptedBytes);
 
   };

@@ -86,6 +86,8 @@ void Mineserver::Network_Client::start()
 {
   std::cout << "Client connection starting" << std::endl;
   m_encryptionPending = false; //this will be set to true when about to send 0xFC response.
+  m_encrypted = false;
+  this->generateVerificationToken(4);
   read();
 }
 
@@ -130,9 +132,6 @@ void Mineserver::Network_Client::write()
 {
   for (std::vector<Mineserver::Network_Message::pointer_t>::iterator it=m_outgoing.begin();it!=m_outgoing.end();++it) {
     printf("Trying to send message ID: %02x\n", (*it)->mid);
-    //testing code
-    std::cout << "The size of the m_outgoingBuffer in the compose iterator is: " << m_outgoingBuffer.size() << std::endl;
-    //end testing code
     m_protocol->compose(m_outgoingBuffer, **it);
     //if its the acknowledging 0xFC, set the encryption in the write callback (handleWrite)
     if( (*it)->mid == 0xFC ){
@@ -146,7 +145,6 @@ void Mineserver::Network_Client::write()
   //overwrite the values in the buffer with the AES encrypted equalivant.
   if(m_encrypted)
   {
-    std::cout << "About to encrypt the outgoing data. Byte count: " << m_outgoingBuffer.size() << std::endl;
     int encyptedLength;
 
     if(!EVP_EncryptUpdate(&m_encryptionContext, &m_outgoingBuffer[0], &encyptedLength, &m_outgoingBuffer[0], m_outgoingBuffer.size())){
@@ -160,7 +158,6 @@ void Mineserver::Network_Client::write()
 
   if (!m_writing)
   {
-    std::cout << "About to call async write with: " << m_outgoingBuffer.size() << " bytes in the buffer that should be encrypted now." << std::endl;
     m_writing = true;
 
     m_socket.async_write_some(
@@ -180,23 +177,22 @@ void Mineserver::Network_Client::handleRead(const boost::system::error_code& e, 
 {
   if (!e) {
     if(this->m_encrypted){
-      std::cout << "Attempting to decrypt incoming data" << std::endl;
       uint8_t* encrypted = (uint8_t*)m_tmp.c_array();
       uint8_t* decrypted;
       int decryptedLength;
       decrypted = new uint8_t[n];
 
-      if(EVP_DecryptUpdate(&m_decryptionContext, decrypted, &decryptedLength, (const uint8_t*)encrypted, n)){
+      if(!EVP_DecryptUpdate(&m_decryptionContext, decrypted, &decryptedLength, (const uint8_t*)encrypted, n)){
         std::cout << "There was an error decrypting the bytes" << std::endl;
         ERR_print_errors_fp(stdout);
       }
 
       m_incomingBuffer.insert(m_incomingBuffer.end(), decrypted, decrypted + n);
 
-      std::cout << "Got bytes: ";
+      std::cout << "Got bytes (been decrypted): ";
 
       for(unsigned int i = 0; i < n; i++){
-        std::cout << std::hex << (int)decrypted[i];
+        printf("%02x:", decrypted[i]);
       }
       std::cout << std::endl;
 
@@ -207,7 +203,7 @@ void Mineserver::Network_Client::handleRead(const boost::system::error_code& e, 
     {
       //we're not encrypted yet, just read the message as usual
       m_incomingBuffer.insert(m_incomingBuffer.end(), m_tmp.begin(), m_tmp.begin() + n);
-      printf("Got bytes: ");
+      printf("Got bytes (not encrypted): ");
       for (boost::array<uint8_t, 8192>::iterator it=m_tmp.begin();it!=m_tmp.begin()+n;++it) {
         printf("%02x:", *it);
       }
@@ -236,11 +232,11 @@ void Mineserver::Network_Client::handleRead(const boost::system::error_code& e, 
 
 /**
  * The boost write() call-back. Called once the outgoing bytes have been sent sent.
- * n is the amount of bytes that were actually sent down the tubes.
+ * n is the amount of bytes that were actually sent down the tubes. It calls
+ * write() again if there are still bytes remaining in the buffer.
  */
 void Mineserver::Network_Client::handleWrite(const boost::system::error_code& e, size_t n)
 {
-  std::cout << "handleWrite called with n: " << n << std::endl;
 	m_outgoingBuffer.erase(m_outgoingBuffer.begin(), m_outgoingBuffer.begin() + n);
 	std::cout << "Wrote " << n << " bytes, " << m_outgoingBuffer.size() << " left." << std::endl;
   m_writing = false;
@@ -277,4 +273,25 @@ void Mineserver::Network_Client::startEncryption(uint8_t* symmetricKey)
  */
 void Mineserver::Network_Client::setEncrypted(bool state){
   m_encrypted = state;
+}
+
+/**
+ * Generate the verification token for the 0xFD packet,
+ * client should return these bytes encrypted with the public key.
+ */
+void Mineserver::Network_Client::generateVerificationToken(short length)
+{
+  std::cout << "Generating verification token for new client." << std::endl;
+  this->m_verificationToken.reserve(length);
+  for(int i=0; i<length;i++)
+  {
+    m_verificationToken.push_back((uint8_t) rand() % 256);
+  }
+}
+
+/**
+ * Gets the encryption verification token for checking public key is working OK.
+ */
+std::vector<uint8_t> Mineserver::Network_Client::getVerificationToken(){
+  return m_verificationToken;
 }

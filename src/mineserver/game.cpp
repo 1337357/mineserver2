@@ -189,8 +189,15 @@ void Mineserver::Game::messageWatcherHandshake(Mineserver::Game::pointer_t game,
   response->serverId = "-"; //need to generate server id for online mode
   response->publicKeyLength = authentication->getPublicKeyLength() - 36; //ignore some padding from end
   response->publicKey = authentication->getPublicKey() + 28; //remove more padding from start
-  response->verifyTokenLength = authentication->getEncryptionBytesLength();
-  response->verifyToken = authentication->getEncryptionBytes();
+
+  std::vector<uint8_t> token = client->getVerificationToken();
+  uint8_t eBytes[token.size()];
+  for(unsigned int i = 0; i < token.size(); i++){
+    eBytes[i] = token[i];
+  }
+
+  response->verifyTokenLength = (uint16_t)token.size();
+  response->verifyToken = eBytes;
   client->outgoing().push_back(response);
 }
 
@@ -201,7 +208,7 @@ void Mineserver::Game::messageWatcherEncryptionResponse(Mineserver::Game::pointe
   const Mineserver::Network_Message_EncryptionResponse* msg = reinterpret_cast<Mineserver::Network_Message_EncryptionResponse*>(&(*message));
 
   /* Verify the encryption bytes to see if they match */
-  if(authentication->verifyEncryptionBytes(msg->verifyTokenLength, msg->verifyToken)) {
+  if(authentication->verifyEncryptionBytes(msg->verifyTokenLength, msg->verifyToken, client->getVerificationToken())) {
     std::cout << "Client verify token is correct" << std::endl;
     //Now would be the time to verify the client with session.minecraft.net
     //yeaah, nah...
@@ -251,6 +258,11 @@ void Mineserver::Game::messageWatcherClientStatus(Mineserver::Game::pointer_t ga
 
 
     Mineserver::World::pointer_t world = getWorld(0);
+    Mineserver::WorldPosition wp(10,20,10);
+    //wp.x = 10;
+    //wp.y = 20;
+    //wp.z = 10;
+    world->setSpawnPosition(wp);
 
 
     for (int x = -5; x <= 5; ++x) {

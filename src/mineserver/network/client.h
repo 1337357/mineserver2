@@ -60,6 +60,8 @@ namespace Mineserver
 		std::vector<uint8_t> m_outgoingBuffer;
     std::vector<Mineserver::Network_Message::pointer_t> m_incoming;
     std::vector<Mineserver::Network_Message::pointer_t> m_outgoing;
+    /* The encryption bytes the client will resend in 0xFC packet. */
+    std::vector<uint8_t> m_verificationToken;
     bool m_writing;
     bool m_alive;
     uint32_t m_inactiveTicks;
@@ -119,10 +121,12 @@ namespace Mineserver
     void write();
     void startEncryption(uint8_t* symmetricKey);
     void setEncrypted(bool state);
+    std::vector<uint8_t> getVerificationToken();
 
   private:
     void handleRead(const boost::system::error_code& e, size_t n);
     void handleWrite(const boost::system::error_code& e, size_t n);
+    void generateVerificationToken(short length);
   };
 }
 

@@ -28,6 +28,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <cstring>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -62,8 +63,6 @@ Mineserver::Network_Authenticator::Network_Authenticator()
   len = i2d_X509(m_x509, &buf);
   m_publicKeyLength = len;
   m_publicKey = (uint8_t*)buf;
-
-  generateEncryptionBytes(4);
 }
 
 Mineserver::Network_Authenticator::~Network_Authenticator()
@@ -83,43 +82,33 @@ int16_t Mineserver::Network_Authenticator::getPublicKeyLength()
 
 void Mineserver::Network_Authenticator::generateId()
 {
-  //Need complete do for online mod
+  //todo - Need complete do for online mode
 }
 
-void Mineserver::Network_Authenticator::generateEncryptionBytes(short length)
-{
-  unsigned char * cRandom;
-  cRandom = new unsigned char[length];
+/**
+ * Compare the RSA encrypted verification token with the one generated for the
+ * Mineserver::Network_Client
+ */
+bool Mineserver::Network_Authenticator::verifyEncryptionBytes(short encryptedLength, const uint8_t* encryptedBytes, std::vector<uint8_t> token){
+  uint8_t decryptedBuffer[token.size()];
+  uint8_t encryptedBuffer[encryptedLength];
+  memset(encryptedBuffer, 0, encryptedLength);
 
-  for(int i=0;i<length;i++)
-  {
-    cRandom[i] = rand() % 256;
+  for(unsigned int i = 0; i < token.size(); i++){
+    decryptedBuffer[i] = token[i];
   }
-  m_encryptionBytesLength = (uint16_t) length;
-  m_encryptionBytes = (uint8_t*)cRandom;
-}
 
-bool Mineserver::Network_Authenticator::verifyEncryptionBytes(short length, const uint8_t* encryptedBytes){
-  uint8_t buffer[length];
-  memset(buffer, 0, length);
-  int resultLength = RSA_private_decrypt(length, encryptedBytes, buffer, m_rsa , RSA_PKCS1_PADDING);
+  int resultLength = RSA_private_decrypt(encryptedLength, encryptedBytes, encryptedBuffer, m_rsa , RSA_PKCS1_PADDING);
 
-  // Check that the length is right and the bytes match once decrypted using RSA
-  if(resultLength == 4 && std::string((char *)buffer) == std::string((char *)m_encryptionBytes)){
+  //compare the encrypted and decrypted arrays.
+  int difference = memcmp(encryptedBuffer, decryptedBuffer, sizeof(decryptedBuffer));
+  if(resultLength == 4 && difference == 0){
     return true;
   }
   else if(resultLength < 0){
     ERR_print_errors_fp(stdout);
   }
   return false;
-}
-
-uint8_t* Mineserver::Network_Authenticator::getEncryptionBytes(){
-  return m_encryptionBytes;
-}
-
-uint16_t Mineserver::Network_Authenticator::getEncryptionBytesLength(){
-  return m_encryptionBytesLength;
 }
 
 uint8_t* Mineserver::Network_Authenticator::decryptSymmetricKey(short length, uint8_t* bytes){
@@ -138,6 +127,7 @@ uint8_t* Mineserver::Network_Authenticator::decryptSymmetricKey(short length, ui
   }
 
   printf("Result of decrypted symmetric key was: %i\n Something went WRONG!\n", resultLength);
+  ERR_print_errors_fp(stdout);
   return NULL;
 }
 
