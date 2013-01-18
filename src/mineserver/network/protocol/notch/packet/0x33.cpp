@@ -69,10 +69,10 @@ int Mineserver::Network_Protocol_Notch_Packet_0x33::_write(Mineserver::Network_P
   uint8_t* lightSky = chunk + 8192;
 	memset(lightSky, 0xFF, 2048);
 
-  for (int y = 0; y < 16; ++y) {
-    for (int x = 0; x < 16; ++x) {
+  for (int y = 0; y < 16; ++y) { //for (int y = 0; y < 16; ++y)
+    for (int x = 0; x < 16; ++x) { // for (int x = 0; x < 16; ++x)
       for (int z = 0; z < 16; ++z) {
-        blockType[y+(z*16)+(x*16*16)] = msg->chunk->getBlockType(x, y, z);
+        blockType[y+(z*16)+(x*16*16)] = msg->chunk->getBlockType(y, x, z);
 //        blockMeta[y+(z*128)+(x*128*16)] = 0x00; //(msg->chunk->getBlockMeta(x, y, z) << 4) + msg->chunk->getBlockMeta(x+1, y, z);
 //        lightSky[y+(z*128)+(x*128*16)] = 0xFF; //(msg->chunk->getLightSky(x, y, z) << 4) + msg->chunk->getLightSky(x+1, y, z);
 //        lightBlock[y+(z*128)+(x*128*16)] = 0xFF; //(msg->chunk->getLightBlock(x, y, z) << 4) + msg->chunk->getLightBlock(x+1, y, z);
