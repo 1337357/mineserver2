@@ -154,7 +154,11 @@ void Mineserver::Network_Client::write()
 
   }//end if IF m_encrypted
 
-  std::cout << "We want to send " << m_outgoingBuffer.size() << " bytes." << std::endl;
+  std::cout << "We want to send " << m_outgoingBuffer.size() << " bytes. They are: " << std::endl;
+  for(unsigned int i = 0; i < m_outgoingBuffer.size(); i++){
+	  printf("%02x:", m_outgoingBuffer[i]);
+  }
+  std::cout << std::endl;
 
   if (!m_writing)
   {
@@ -286,7 +290,9 @@ void Mineserver::Network_Client::generateVerificationToken(short length)
   for(int i=0; i<length;i++)
   {
     m_verificationToken.push_back((uint8_t) rand() % 256);
+    printf("%02x:", m_verificationToken[i]);
   }
+  std::cout << std::endl;
 }
 
 /**

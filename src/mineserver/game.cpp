@@ -189,15 +189,17 @@ void Mineserver::Game::messageWatcherHandshake(Mineserver::Game::pointer_t game,
   response->serverId = "-"; //need to generate server id for online mode
   response->publicKeyLength = authentication->getPublicKeyLength() - 36; //ignore some padding from end
   response->publicKey = authentication->getPublicKey() + 28; //remove more padding from start
-
-  std::vector<uint8_t> token = client->getVerificationToken();
-  uint8_t eBytes[token.size()];
-  for(unsigned int i = 0; i < token.size(); i++){
-    eBytes[i] = token[i];
+  response->verifyTokenLength = (uint16_t)client->getVerificationToken().size();
+  uint8_t* token = new uint8_t[client->getVerificationToken().size()];
+  //begin test code
+  std::cout << "The verification token in game is: " << std::endl;
+  for(unsigned int i = 0; i < client->getVerificationToken().size(); i++){
+	  printf("%02x:", client->getVerificationToken()[i]);
+	  token[i] = client->getVerificationToken()[i];
   }
-
-  response->verifyTokenLength = (uint16_t)token.size();
-  response->verifyToken = eBytes;
+  std::cout << std::endl;
+  //end test code
+  response->verifyToken = token;
   client->outgoing().push_back(response);
 }
 
@@ -356,123 +358,7 @@ void Mineserver::Game::messageWatcherChat(Mineserver::Game::pointer_t game, Mine
 
 void Mineserver::Game::messageWatcherLogin(Mineserver::Game::pointer_t game, Mineserver::Network_Client::pointer_t client, Mineserver::Network_Message::pointer_t message)
 {
-  std::cout << "Login watcher called!" << std::endl;
-  /*
-  const Mineserver::Network_Message_Login* msg = reinterpret_cast<Mineserver::Network_Message_Login*>(&(*message));
-
-  Mineserver::World::pointer_t world = getWorld(0);
-
-  std::cout << "Player login v." << msg->version << ": " << msg->username << std::endl;
-
-  Mineserver::Game_Player::pointer_t player;
-  if (m_players.find(msg->username) == m_players.end()) {
-    player = boost::make_shared<Mineserver::Game_Player>();
-    player->setName(msg->username);
-    player->setEid(getNextEid());
-    player->getPosition().x = world->getSpawnPosition().x;
-    player->getPosition().y = world->getSpawnPosition().y;
-    player->getPosition().z = world->getSpawnPosition().z;
-    player->getPosition().stance = player->getPosition().y + 1.62;
-    player->getPosition().onGround = true;
-    addPlayer(player);
-  } else {
-    player = m_players[msg->username];
-  }
-
-  associateClient(client, player);
-
-  boost::shared_ptr<Mineserver::Network_Message_Login> loginMessage = boost::make_shared<Mineserver::Network_Message_Login>();
-  loginMessage->mid = 0x01;
-  loginMessage->version = 22;
-  loginMessage->seed = world->getWorldSeed();
-  loginMessage->mode = world->getGameMode();
-  loginMessage->dimension = world->getDimension();
-  loginMessage->difficulty = world->getDifficulty();
-  loginMessage->worldHeight = world->getWorldHeight();
-  loginMessage->maxPlayers = 32; // this determines how many slots the tab window will have
-  client->outgoing().push_back(loginMessage);
-
-  for (int x = -5; x <= 5; ++x) {
-    for (int z = -5; z <= 5; ++z) {
-      boost::shared_ptr<Mineserver::Network_Message_ChunkPrepare> chunkPrepareMessage = boost::make_shared<Mineserver::Network_Message_ChunkPrepare>();
-      chunkPrepareMessage->mid = 0x32;
-      chunkPrepareMessage->x = x;
-      chunkPrepareMessage->z = z;
-      chunkPrepareMessage->mode = 1;
-      client->outgoing().push_back(chunkPrepareMessage);
-    }
-  }
-
-  for (int x = -5; x <= 5; ++x) {
-    for (int z = -5; z <= 5; ++z) {
-      boost::shared_ptr<Mineserver::Network_Message_Chunk> chunkMessage = boost::make_shared<Mineserver::Network_Message_Chunk>();
-      chunkMessage->mid = 0x33;
-      chunkMessage->posX = x * 16;
-      chunkMessage->posY = 0;
-      chunkMessage->posZ = z * 16;
-      chunkMessage->sizeX = 15;
-      chunkMessage->sizeY = 127;
-      chunkMessage->sizeZ = 15;
-      chunkMessage->chunk = world->generateChunk(x, z);
-      client->outgoing().push_back(chunkMessage);
-    }
-  }
-
-  boost::shared_ptr<Mineserver::Network_Message_SpawnPosition> spawnPositionMessage = boost::make_shared<Mineserver::Network_Message_SpawnPosition>();
-  spawnPositionMessage->mid = 0x06;
-  spawnPositionMessage->x = world->getSpawnPosition().x;
-  spawnPositionMessage->y = world->getSpawnPosition().y;
-  spawnPositionMessage->z = world->getSpawnPosition().z;
-  client->outgoing().push_back(spawnPositionMessage);
-
-  boost::shared_ptr<Mineserver::Network_Message_WindowItems> windowItemsMessage = boost::make_shared<Mineserver::Network_Message_WindowItems>();
-  windowItemsMessage->mid = 0x68;
-  windowItemsMessage->windowId = 0;
-  windowItemsMessage->count = 44;
-  windowItemsMessage->slots.resize(windowItemsMessage->count);
-  //for (Network_Message_WindowItems::slotList_t::iterator it = windowItemsMessage->slots.begin(); it != windowItemsMessage->slots.end(); ++it) {
-  //  (*it) = Game_Object_Slot(-1, 0, 0);
-  //}
-  //windowItemsMessage->slots[36].setItemId(278); windowItemsMessage->slots[36].setCount(1); windowItemsMessage->slots[36].setEnchantable(true);
-  //windowItemsMessage->slots[37].setItemId(277); windowItemsMessage->slots[37].setCount(1); windowItemsMessage->slots[36].setEnchantable(true);
-  //windowItemsMessage->slots[38].setItemId(279); windowItemsMessage->slots[38].setCount(1); windowItemsMessage->slots[36].setEnchantable(true);
-  windowItemsMessage->slots[39].setItemId(1); windowItemsMessage->slots[39].setCount(64);
-  windowItemsMessage->slots[40].setItemId(3); windowItemsMessage->slots[40].setCount(64);
-  windowItemsMessage->slots[41].setItemId(5); windowItemsMessage->slots[41].setCount(64);
-  windowItemsMessage->slots[42].setItemId(58); windowItemsMessage->slots[42].setCount(64);
-  windowItemsMessage->slots[43].setItemId(54); windowItemsMessage->slots[43].setCount(64);
-  windowItemsMessage->slots[44].setItemId(102); windowItemsMessage->slots[44].setCount(64);
-  client->outgoing().push_back(windowItemsMessage);
-
-  std::cout << "Spawning player at " << player->getPosition().x << "," << player->getPosition().y << "," << player->getPosition().z << std::endl;
-
-  boost::shared_ptr<Mineserver::Network_Message_PositionAndOrientation> positionAndOrientationMessage = boost::make_shared<Mineserver::Network_Message_PositionAndOrientation>();
-  positionAndOrientationMessage->mid = 0x0D;
-  positionAndOrientationMessage->x = player->getPosition().x;
-  positionAndOrientationMessage->y = player->getPosition().y;
-  positionAndOrientationMessage->z = player->getPosition().z;
-  positionAndOrientationMessage->stance = player->getPosition().stance;
-  positionAndOrientationMessage->yaw = player->getPosition().yaw;
-  positionAndOrientationMessage->pitch = player->getPosition().pitch;
-  positionAndOrientationMessage->onGround = player->getPosition().onGround;
-  client->outgoing().push_back(positionAndOrientationMessage);
-
-  for(clientList_t::iterator it = m_clients.begin(); it != m_clients.end(); ++it)
-  {
-    Mineserver::Network_Client::pointer_t cclient = *it;
-    boost::shared_ptr<Mineserver::Network_Message_PlayerListItem> playerListItemMessage = boost::make_shared<Mineserver::Network_Message_PlayerListItem>();
-    playerListItemMessage->mid = 0xC9;
-    playerListItemMessage->name = player->getName();
-    playerListItemMessage->online = true;
-    playerListItemMessage->ping = -1; // Note: this player shouldn't have a ping yet, so we should leave this -1
-    cclient->outgoing().push_back(playerListItemMessage);
-    boost::shared_ptr<Mineserver::Network_Message_Chat> chatMessage = boost::make_shared<Mineserver::Network_Message_Chat>();
-    chatMessage->mid = 0x03;
-    chatMessage->message += msg->username;
-    chatMessage->message += " joined the game.";
-    cclient->outgoing().push_back(chatMessage);
-  }
-  */
+  std::cout << "Login watcher called! It shouldn't have been!" << std::endl;
 }
 
 void Mineserver::Game::messageWatcherPosition(Mineserver::Game::pointer_t game, Mineserver::Network_Client::pointer_t client, Mineserver::Network_Message::pointer_t message)
