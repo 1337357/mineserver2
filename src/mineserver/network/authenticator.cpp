@@ -90,85 +90,26 @@ void Mineserver::Network_Authenticator::generateId()
  * Mineserver::Network_Client
  */
 bool Mineserver::Network_Authenticator::verifyEncryptionBytes(short encryptedLength, const uint8_t* encryptedBytes, std::vector<uint8_t> token){
-	uint8_t actualToken[token.size()];
-	uint8_t* buffer = new uint8_t[encryptedLength];
-	memset(buffer, 0, encryptedLength);
-	//begin test code
-	std::cout << "encryptedLength is: " << encryptedLength << "butes are: "<< std::endl;
-	for(short int i = 0; i < encryptedLength; i++){
-		printf("%02x:", encryptedBytes[i]);
-	}
-	std::cout << std::endl;
-	//end test code
-	int resultLength = RSA_private_decrypt(encryptedLength, encryptedBytes, buffer, m_rsa , RSA_PKCS1_PADDING);
 
-	for(unsigned int i = 0; i < token.size(); i++){
-	    actualToken[i] = token[i];
-	  }
-	//begin test code
-	std::cout << "actual token:" << std::endl;
-	for(unsigned int i = 0; i < token.size(); i++){
-		printf("%02x:", actualToken[i]);
-	}
-	std::cout << std::endl;
+  uint8_t * buffer;
+  buffer = new uint8_t[token.size()];
+  memset(buffer, 0, token.size());
 
-	std::cout << "Printing decypted bytes, they should be the same as the clients m_encryptionBytes" << std::endl;
-	for(int i = 0; i < encryptedLength; i++){
-		printf("%02x:", buffer[i]);
-	}
-	std::cout << std::endl;
-	//end test code
+  int resultLength = RSA_private_decrypt(encryptedLength, encryptedBytes, buffer, m_rsa , RSA_PKCS1_PADDING);
 
-	// Check that the length is right and the bytes match once decrypted using RSA
-	//if(resultLength == 4 && std::string((char *)buffer) == std::string((char *)m_encryptionBytes)){
-	//compare the encrypted and decrypted arrays.
-	int difference = memcmp(buffer, actualToken, resultLength);
-	delete[] buffer;
-
-	if(difference == 0){
-		return true;
-	}
-	else if(resultLength < 0){
-		ERR_print_errors_fp(stdout);
-	}
-	return false;
-	/*
-	 * this code is broken
-  uint8_t decryptedBuffer[token.size()];
-  uint8_t encryptedBuffer[encryptedLength];
-  memset(encryptedBuffer, 0, encryptedLength);
-
-  for(unsigned int i = 0; i < token.size(); i++){
-    decryptedBuffer[i] = token[i];
-  }
-
-  int resultLength = RSA_private_decrypt(encryptedLength, encryptedBytes, encryptedBuffer, m_rsa , RSA_PKCS1_PADDING);
-
-  //begin tests
-  std::cout << "We are about to compare the encrypted and decrypted arrays." << std::endl;
-
-  std::cout << "actual token:" << std::endl;
-  for(unsigned int i = 0; i < token.size(); i++){
-	  printf("%02x:", decryptedBuffer[i]);
-  }
-  std::cout << std::endl;
-
-  std::cout << "decrypted token (should be the same):" << std::endl;
-  for(int i = 0; i < resultLength; i++){
-	  printf("%02x:", encryptedBuffer[i]);
-  }
-  std::cout << std::endl;
-  //end test
   //compare the encrypted and decrypted arrays.
-  int difference = memcmp(encryptedBuffer, decryptedBuffer, sizeof(decryptedBuffer));
+  int difference = memcmp(&token[0], buffer, resultLength);
   if(resultLength == 4 && difference == 0){
+    delete[] buffer;
     return true;
   }
   else if(resultLength < 0){
     ERR_print_errors_fp(stdout);
   }
+  delete[] buffer;
   return false;
-  */
+
+
 }
 
 uint8_t* Mineserver::Network_Authenticator::decryptSymmetricKey(short length, uint8_t* bytes){
