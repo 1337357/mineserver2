@@ -142,6 +142,12 @@ void Mineserver::Network_Client::write()
   //clear the 'messages' objects list now that they have been composed into bytes the client understands.
   m_outgoing.clear();
 
+  std::cout << "We want to send " << m_outgoingBuffer.size() << " bytes. They are: " << std::endl;
+  for(unsigned int i = 0; i < m_outgoingBuffer.size(); i++){
+    printf("%02x:", m_outgoingBuffer[i]);
+  }
+  std::cout << std::endl;
+
   //overwrite the values in the buffer with the AES encrypted equalivant.
   if(m_encrypted)
   {
@@ -153,12 +159,6 @@ void Mineserver::Network_Client::write()
     }
 
   }//end if IF m_encrypted
-
-  std::cout << "We want to send " << m_outgoingBuffer.size() << " bytes. They are: " << std::endl;
-  for(unsigned int i = 0; i < m_outgoingBuffer.size(); i++){
-	  printf("%02x:", m_outgoingBuffer[i]);
-  }
-  std::cout << std::endl;
 
   if (!m_writing)
   {

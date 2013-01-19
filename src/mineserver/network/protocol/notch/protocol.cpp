@@ -92,6 +92,7 @@
 #include <mineserver/network/protocol/notch/packet/0x6B.h>
 #include <mineserver/network/protocol/notch/packet/0x82.h>
 #include <mineserver/network/protocol/notch/packet/0x83.h>
+#include <mineserver/network/protocol/notch/packet/0xCC.h>
 #include <mineserver/network/protocol/notch/packet/0xC8.h>
 #include <mineserver/network/protocol/notch/packet/0xC9.h>
 #include <mineserver/network/protocol/notch/packet/0xCD.h>
@@ -477,6 +478,12 @@ int Mineserver::Network_Protocol_Notch_Protocol::parse(std::vector<uint8_t>& byt
     case 0x83:
     {
       Mineserver::Network_Protocol_Notch_Packet_0x83 packet;
+      packetState = packet.read(m_packetStream, &message);
+      break;
+    }
+    case 0xCC:
+    {
+      Mineserver::Network_Protocol_Notch_Packet_0xCC packet;
       packetState = packet.read(m_packetStream, &message);
       break;
     }
