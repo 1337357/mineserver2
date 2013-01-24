@@ -120,6 +120,8 @@ void Mineserver::Game::run()
           response->ping = 0; // TODO: Calculate a player's ping
           client->outgoing().push_back(response);
 
+          std::cout << "Player Name: " << player->getName() << std::endl;
+
         }
       }
     } else {
@@ -193,9 +195,9 @@ void Mineserver::Game::messageWatcherHandshake(Mineserver::Game::pointer_t game,
   uint8_t* token = new uint8_t[client->getVerificationToken().size()];
   //begin test code
   std::cout << "The verification token in game is: " << std::endl;
-  for(unsigned int i = 0; i < client->getVerificationToken().size(); i++){
-	  printf("%02x:", client->getVerificationToken()[i]);
-	  token[i] = client->getVerificationToken()[i];
+  for(unsigned int i = 0; i < client->getVerificationToken().size(); i++) {
+    printf("%02x:", client->getVerificationToken()[i]);
+    token[i] = client->getVerificationToken()[i];
   }
   std::cout << std::endl;
   //end test code
@@ -369,36 +371,46 @@ void Mineserver::Game::messageWatcherDigging(Mineserver::Game::pointer_t game, M
   }
 
   // status 0x00: start digging
+  // status 0x01: cancel digging
   // status 0x02: finish digging
   // status 0x04: drop item
   // status 0x05: shoot arrow
 
-  if (msg->status != 0 && msg->status != 2) {
-    return;
-  }
+  switch (msg->status) {
+  case 0x0:
+    //should start timer then compare to list of block break times once the client sends 0x02
+    break;
 
-  Mineserver::World::pointer_t world = getWorld(0);
+  case 0x1:
+    //should stop timer
+    break;
 
-  int chunk_x, chunk_z;
-  chunk_x = ((msg->x) >> 4);
-  chunk_z = ((msg->z) >> 4);
+  case 0x2:
 
-  if (!world->hasChunk(chunk_x, chunk_z)) {
-    std::cout << "Chunk " << chunk_x << "," << chunk_z << " not found!" << std::endl;
-  } else {
-    Mineserver::World_Chunk::pointer_t chunk = world->getChunk(chunk_x, chunk_z);
-    Mineserver::World_ChunkPosition cPosition = Mineserver::World_ChunkPosition(msg->x & 15, msg->y, msg->z & 15);
-    Mineserver::WorldBlockPosition wPosition = Mineserver::WorldBlockPosition(msg->x, msg->y, msg->z);
+    Mineserver::World::pointer_t world = getWorld(0);
 
-    uint8_t type = chunk->getBlockType(cPosition.x, cPosition.y, cPosition.z);
+    int chunk_x, chunk_z;
+    chunk_x = ((msg->x) >> 4);
+    chunk_z = ((msg->z) >> 4);
 
-    if (type != 0x07) { // if type is not bedrock
-      chunk->setBlockType(cPosition.x, cPosition.y, cPosition.z, 0);
-      chunk->setBlockMeta(cPosition.x, cPosition.y, cPosition.z, 0);
+    if (!world->hasChunk(chunk_x, chunk_z)) {
+      std::cout << "Chunk " << chunk_x << "," << chunk_z << " not found!" << std::endl;
+    } else {
+      Mineserver::World_Chunk::pointer_t chunk = world->getChunk(chunk_x, chunk_z);
+      Mineserver::World_ChunkPosition cPosition = Mineserver::World_ChunkPosition(msg->x & 15, msg->y, msg->z & 15);
+      Mineserver::WorldBlockPosition wPosition = Mineserver::WorldBlockPosition(msg->x, msg->y, msg->z);
 
-      blockBreakPostWatcher(shared_from_this(), getPlayerForClient(client), world, wPosition, chunk, cPosition);
+      uint8_t type = chunk->getBlockType(cPosition.x, cPosition.y, cPosition.z);
+
+      if (type != 0x07) { // if type is not bedrock
+        chunk->setBlockType(cPosition.x, cPosition.y, cPosition.z, 0);
+        chunk->setBlockMeta(cPosition.x, cPosition.y, cPosition.z, 0);
+
+        blockBreakPostWatcher(shared_from_this(), getPlayerForClient(client), world, wPosition, chunk, cPosition);
+      }
     }
 
+    break;
   }
 }
 
