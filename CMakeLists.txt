@@ -65,6 +65,7 @@ FIND_PACKAGE(OpenSSL)
 
 SET(mineserver_source
   src/app.cpp
+  src/mineserver/configuration.cpp
   src/mineserver/nbt.cpp
   src/mineserver/game.cpp
   src/mineserver/game/player.cpp

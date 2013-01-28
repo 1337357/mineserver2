@@ -36,6 +36,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
 
+#include <mineserver/configuration.h>
 #include <mineserver/game.h>
 #include <mineserver/network/client.h>
 
@@ -51,10 +52,11 @@ namespace Mineserver
   public:
     typedef boost::shared_ptr<Mineserver::Network_Server> pointer_t;
 
-    Network_Server(Mineserver::Game::pointer_t game, Mineserver::Network_Protocol::pointer_t protocol, boost::asio::io_service* service) : m_game(game),m_protocol(protocol),m_socket(*service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 25565))
+    Network_Server(Mineserver::Configuration config, Mineserver::Game::pointer_t game, Mineserver::Network_Protocol::pointer_t protocol, boost::asio::io_service* service) : m_game(game),m_protocol(protocol),m_socket(*service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), config.getInt("port")))
     {
       startAccept();
     }
+
 
   private:
     void startAccept();

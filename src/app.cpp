@@ -34,6 +34,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 
+#include <mineserver/configuration.h>
 #include <mineserver/game.h>
 #include <mineserver/world.h>
 #include <mineserver/world/generator.h>
@@ -47,6 +48,9 @@ int main()
   std::cout << "Mineserver 2.0" << std::endl;
 
   boost::asio::io_service service;
+  std::cout << "Loading config..." << std::endl;
+  Mineserver::Configuration config;
+  config.loadGlobalConfig("mineserver.conf");
 
   Mineserver::Game::pointer_t game = boost::make_shared<Mineserver::Game>();
 
@@ -58,21 +62,21 @@ int main()
   game->addMessageWatcher(0x01, boost::bind(&Mineserver::Game::messageWatcherLogin, game, _1, _2, _3));
   game->addMessageWatcher(0x02, boost::bind(&Mineserver::Game::messageWatcherHandshake, game, _1, _2, _3));
   game->addMessageWatcher(0x03, boost::bind(&Mineserver::Game::messageWatcherChat, game, _1, _2, _3));
-  game->addMessageWatcher(0x0B, boost::bind(&Mineserver::Game::messageWatcherPosition, game, _1, _2, _3));
-  game->addMessageWatcher(0x0C, boost::bind(&Mineserver::Game::messageWatcherOrientation, game, _1, _2, _3));
-  game->addMessageWatcher(0x0D, boost::bind(&Mineserver::Game::messageWatcherPositionAndOrientation, game, _1, _2, _3));
+  //game->addMessageWatcher(0x0B, boost::bind(&Mineserver::Game::messageWatcherPosition, game, _1, _2, _3));
+  //game->addMessageWatcher(0x0C, boost::bind(&Mineserver::Game::messageWatcherOrientation, game, _1, _2, _3));
+  //broken...game->addMessageWatcher(0x0D, boost::bind(&Mineserver::Game::messageWatcherPositionAndOrientation, game, _1, _2, _3));
   game->addMessageWatcher(0x0E, boost::bind(&Mineserver::Game::messageWatcherDigging, game, _1, _2, _3));
   game->addMessageWatcher(0x0F, boost::bind(&Mineserver::Game::messageWatcherBlockPlacement, game, _1, _2, _3));
   game->addMessageWatcher(0x35, boost::bind(&Mineserver::Game::messageWatcherBlockChange, game, _1, _2, _3));
   game->addMessageWatcher(0xCD, boost::bind(&Mineserver::Game::messageWatcherClientStatus, game, _1, _2, _3));
   game->addMessageWatcher(0xFC, boost::bind(&Mineserver::Game::messageWatcherEncryptionResponse, game, _1, _2, _3));
   game->addMessageWatcher(0xFE, boost::bind(&Mineserver::Game::messageWatcherServerListPing, game, _1, _2, _3));
-  game->addMovementPostWatcher(boost::bind(&Mineserver::Game::movementPostWatcher, game, _1, _2, _3));
-  game->addBlockBreakPostWatcher(boost::bind(&Mineserver::Game::blockBreakPostWatcher, game, _1, _2, _3, _4, _5, _6));
-  game->addBlockPlacePostWatcher(boost::bind(&Mineserver::Game::blockPlacePostWatcher, game, _1, _2, _3, _4, _5, _6, _7, _8));
+  //game->addMovementPostWatcher(boost::bind(&Mineserver::Game::movementPostWatcher, game, _1, _2, _3));
+  //game->addBlockBreakPostWatcher(boost::bind(&Mineserver::Game::blockBreakPostWatcher, game, _1, _2, _3, _4, _5, _6));
+  //game->addBlockPlacePostWatcher(boost::bind(&Mineserver::Game::blockPlacePostWatcher, game, _1, _2, _3, _4, _5, _6, _7, _8));
 
   Mineserver::Network_Protocol::pointer_t protocol = boost::make_shared<Mineserver::Network_Protocol_Notch_Protocol>();
-  Mineserver::Network_Server::pointer_t server = boost::make_shared<Mineserver::Network_Server>(game, protocol, &service);
+  Mineserver::Network_Server::pointer_t server = boost::make_shared<Mineserver::Network_Server>(config, game, protocol, &service);
 
   std::cout << "Server is now waiting for connections." << std::endl << "--" << std::endl;
 
