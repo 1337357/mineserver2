@@ -35,7 +35,7 @@ int Mineserver::Network_Protocol_Notch_Packet_0x1D::_read(Mineserver::Network_Pr
   Mineserver::Network_Message_0x1D* msg = new Mineserver::Network_Message_0x1D;
   *message = msg;
 
-  ps >> msg->mid >> msg->entityId;
+  ps >> msg->mid >> msg->entityCount >> msg->entityId;
 
   return STATE_GOOD;
 }
@@ -44,7 +44,7 @@ int Mineserver::Network_Protocol_Notch_Packet_0x1D::_write(Mineserver::Network_P
 {
   const Mineserver::Network_Message_0x1D* msg = static_cast<const Mineserver::Network_Message_0x1D*>(&message);
 
-  ps << msg->mid << msg->entityId;
+  ps << msg->mid << msg->entityCount << msg->entityId;
 
   return STATE_GOOD;
 }

@@ -45,6 +45,8 @@ namespace Mineserver
     int8_t rotation;
     int8_t pitch;
     int16_t currentItem;
+    int16_t metaData;
+    uint8_t metaEnd;
   };
 }
 

@@ -35,6 +35,7 @@ namespace Mineserver
 {
   struct Network_Message_DestroyEntity : public Mineserver::Network_Message
   {
+    int8_t entityCount;
     int32_t entityId;
   };
 }

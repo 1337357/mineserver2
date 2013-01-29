@@ -35,7 +35,7 @@ int Mineserver::Network_Protocol_Notch_Packet_0x14::_read(Mineserver::Network_Pr
   Mineserver::Network_Message_0x14* msg = new Mineserver::Network_Message_0x14;
   *message = msg;
 
-  ps >> msg->mid >> msg->entityId >> msg->name >> msg->x >> msg->y >> msg->z >> msg->rotation >> msg->pitch >> msg->currentItem;
+  ps >> msg->mid >> msg->entityId >> msg->name >> msg->x >> msg->y >> msg->z >> msg->rotation >> msg->pitch >> msg->currentItem >> msg->metaData >> msg->metaEnd;
 
   return STATE_GOOD;
 }
@@ -44,7 +44,7 @@ int Mineserver::Network_Protocol_Notch_Packet_0x14::_write(Mineserver::Network_P
 {
   const Mineserver::Network_Message_0x14* msg = static_cast<const Mineserver::Network_Message_0x14*>(&message);
 
-  ps << msg->mid << msg->entityId << msg->name << msg->x << msg->y << msg->z << msg->rotation << msg->pitch << msg->currentItem;
+  ps << msg->mid << msg->entityId << msg->name << msg->x << msg->y << msg->z << msg->rotation << msg->pitch << msg->currentItem << msg->metaData << msg->metaEnd;
 
   return STATE_GOOD;
 }

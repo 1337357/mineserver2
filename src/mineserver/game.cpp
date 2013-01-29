@@ -661,6 +661,9 @@ bool Mineserver::Game::movementPostWatcher(Mineserver::Game::pointer_t game, Min
         spawnEntity->rotation = (int8_t)(oldPos.yaw / 360 * 256);
         spawnEntity->pitch    = (int8_t)(oldPos.pitch / 360 * 256);
         spawnEntity->currentItem = 0;
+        spawnEntity->metaData = 0;
+        spawnEntity->metaEnd = 127; //Just blank for now, TODO: Update it
+        //spawnEntity->data = 0;
         for(clientList_t::iterator it=other_clients.begin(); it != other_clients.end(); it++) {
           std::cout << " [" << other->getEid() << "] << spawn entity #" << player->getEid() << std::endl;
           (*it)->outgoing().push_back(spawnEntity);
@@ -675,6 +678,9 @@ bool Mineserver::Game::movementPostWatcher(Mineserver::Game::pointer_t game, Min
         spawnEntity->rotation = (int8_t)(other->getPosition().yaw / 360 * 256);
         spawnEntity->pitch    = (int8_t)(other->getPosition().pitch / 360 * 256);
         spawnEntity->currentItem = 0;
+        spawnEntity->metaData = 0;
+        spawnEntity->metaEnd = 127;
+       // spawnEntity->data = 0;
         for(clientList_t::iterator it=my_clients.begin(); it != my_clients.end(); it++) {
           std::cout << " [" << player->getEid() << "] << spawn entity #" << other->getEid() << std::endl;
           (*it)->outgoing().push_back(spawnEntity);
@@ -760,6 +766,7 @@ void Mineserver::Game::leavingPostWatcher(Mineserver::Game::pointer_t game, Mine
     // send destroy entity
     boost::shared_ptr<Mineserver::Network_Message_DestroyEntity> destroyEntity = boost::make_shared<Mineserver::Network_Message_DestroyEntity>();
     destroyEntity->mid = 0x1D;
+    destroyEntity->entityCount = 1;
     destroyEntity->entityId = player->getEid();
     other_clients = getClientsForPlayer(other);
     for(clientList_t::iterator it=other_clients.begin(); it != other_clients.end(); it++) {
